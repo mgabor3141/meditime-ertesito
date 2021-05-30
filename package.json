@@ -1,0 +1,23 @@
+{
+  "name": "meditime-ertesito",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "mgabor",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "axios-cookiejar-support": "^1.0.1",
+    "cheerio": "^1.0.0-rc.6",
+    "dotenv": "^10.0.0",
+    "lodash": "^4.17.21",
+    "tough-cookie": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^12.20.7",
+    "prettier": "^2.3.0"
+  }
+}
