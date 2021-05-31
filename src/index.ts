@@ -3,13 +3,15 @@ import axios from 'axios'
 import axiosCookieJarSupport from 'axios-cookiejar-support'
 import tough from 'tough-cookie'
 import cheerio from 'cheerio'
+import fs from 'fs'
 
 dotenv.config()
-axiosCookieJarSupport(axios)
-
-const cookieJar = new tough.CookieJar()
 
 const main = async () => {
+  axiosCookieJarSupport(axios)
+
+  const cookieJar = new tough.CookieJar()
+
   const meditime = axios.create({
     baseURL: 'https://meditime.today/',
     withCredentials: true,
@@ -24,23 +26,6 @@ const main = async () => {
     },
   })
 
-  const {data: dailyHtml} = await meditime.post(
-    'https://meditime.today/DailySchedule/Init',
-    null,
-    {
-      params: {
-        date: encodeURIComponent(new Date().toLocaleString()),
-      },
-      headers: {
-        referer: 'https://meditime.today/Main/Default',
-      },
-    },
-  )
-
-  console.log(JSON.stringify(dailyHtml))
-
-  console.log('\n\n=============################=============\n\n\n')
-
   const {data: monthlyHtml} = await meditime.post(
     'https://meditime.today/WardSchedule/MonthlyInitGrouped?doctor=True',
     'X-Requested-With=XMLHttpRequest',
@@ -51,9 +36,41 @@ const main = async () => {
     },
   )
 
-  const $ = cheerio.load(monthlyHtml)
-
-  console.log($('#monthlyViewedGroupedTable').html())
+  fs.writeFile('monthlyHtml.html', monthlyHtml, () => {})
 }
 
-main()
+// main()
+
+fs.readFile('monthlyHtml.html', 'utf8', (err, data) => {
+  const $ = cheerio.load(data)
+
+  console.log(
+    $('table#monthlyViewedGroupedTable')
+      .find('span.allowdragdrop')
+      .toArray()
+      .map((element) => {
+        const entryData = JSON.parse(element.attribs.dragproperties)
+        entryData.Type = $(element)
+          .parent()
+          .children('span.scheduleType')
+          .text()
+
+        return entryData
+      }),
+  )
+
+  console.log(
+    Object.fromEntries(
+      $('select#ddWardIds')
+        .find('option')
+        .toArray()
+        .map((node) => {
+          const entry = $(node)
+          return [
+            entry.attr('value'),
+            `${entry.parent().attr('label')} ${entry.text()}`.trim(),
+          ]
+        }),
+    ),
+  )
+})

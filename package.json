@@ -11,6 +11,7 @@
     "tough-cookie": "^4.0.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.170",
     "@types/node": "^12.20.7",
     "@types/tough-cookie": "^4.0.0",
     "prettier": "^2.3.0",
