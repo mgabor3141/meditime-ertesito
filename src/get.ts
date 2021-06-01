@@ -5,9 +5,11 @@ import {Entry, parse, parseWardIds} from './parse'
 import {getDateForMonth} from './helpers'
 import {promises as fs} from 'fs'
 
+export type WardIds = Record<string, string>
+
 export type Data = {
   entries: Entry[]
-  wardIds: Record<string, string>
+  wardIds: WardIds
 }
 
 export const getData = async (): Promise<Data> => {

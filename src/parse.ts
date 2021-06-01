@@ -1,4 +1,6 @@
 import cheerio from 'cheerio'
+import {LabelTypes} from './events'
+import {WardIds} from './get'
 
 export type Entry = {
   Id: number
@@ -6,7 +8,7 @@ export type Entry = {
   WardId: number
   Date: string
   Text: string
-  Type: string
+  Type: LabelTypes
 }
 
 export const parse = (html: string): Entry[] => {
@@ -23,7 +25,7 @@ export const parse = (html: string): Entry[] => {
     })
 }
 
-export const parseWardIds = (html: string): Record<string, string> => {
+export const parseWardIds = (html: string): WardIds => {
   const $ = cheerio.load(html)
 
   return Object.fromEntries(

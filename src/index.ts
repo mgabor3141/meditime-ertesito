@@ -4,7 +4,7 @@ import {populateCalendars} from './calendar'
 const main = async () => {
   const data = await getData()
 
-  populateCalendars(data)
+  await populateCalendars(data)
 }
 
 main()
