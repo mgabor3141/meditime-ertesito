@@ -149,6 +149,7 @@ export const processEvents = (events: CalendarEvent[]): CalendarEvent[] => {
       const indexForAdjacentEvent = _.findLastIndex(
         accumulator,
         (addedValue) =>
+          !!addedValue.end.date &&
           addedValue.end.date === currentValue.start.date &&
           addedValue.summary === currentValue.summary,
       )
