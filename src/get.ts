@@ -2,7 +2,6 @@ import axiosCookieJarSupport from 'axios-cookiejar-support'
 import axios from 'axios'
 import tough from 'tough-cookie'
 import {Entry, parse, parseWardIds} from './parse'
-import {getDateForMonth} from './helpers'
 import {promises as fs} from 'fs'
 
 export type WardIds = Record<string, string>
@@ -10,6 +9,13 @@ export type WardIds = Record<string, string>
 export type Data = {
   entries: Entry[]
   wardIds: WardIds
+}
+
+const getDateForMonth = (month: number) => {
+  const date = new Date()
+  date.setDate(1)
+  date.setMonth(date.getMonth() + month)
+  return date.toISOString().split('T')[0].replace(/-/g, '.')
 }
 
 export const getData = async (): Promise<Data> => {
@@ -74,14 +80,16 @@ export const getData = async (): Promise<Data> => {
     const newEntries = parse(nextMonthHtml)
     process.stdout.write('Done!')
 
-    if (!newEntries.length) break
+    if (!newEntries.length) {
+      process.stdout.write('\n')
+      break
+    }
 
     entries = [...entries, ...newEntries]
     process.stdout.write(` ${entries.length} entries so far\n`)
   }
 
   await fs.writeFile('data/entries.json', JSON.stringify(entries))
-  process.stdout.write('\n')
 
   return {entries, wardIds}
 }

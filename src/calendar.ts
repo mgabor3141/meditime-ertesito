@@ -120,20 +120,22 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
     // Local events
     const localIds = new Set(userEntries.map((event) => event.id))
 
-    console.log({localIds})
+    const now = new Date()
+    const beginningOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
     // Get events from calendar
     const inCalendarIds = new Set(
       (
         await calendar.events.list({
           calendarId,
+          timeMin: beginningOfMonth.toISOString(),
           maxResults: 2500,
           fields: 'items(id)',
         })
       ).data.items?.map(({id}) => id),
     )
 
-    console.log({inCalendarIds})
+    console.log({localIds, inCalendarIds})
 
     if (process.env.FORCE_REFRESH_EVENTS === 'true') {
       // Remove all events then add all events
