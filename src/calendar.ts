@@ -143,7 +143,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
       for (const event of userEntries) {
         await addEvent(calendarId, event)
       }
-      return
+      continue
     }
 
     // Add missing entries

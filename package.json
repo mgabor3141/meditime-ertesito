@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "start": "yarn run build && yarn run run",
+    "dev": "yarn build && yarn start",
     "build": "tsc",
-    "run": "node --require dotenv/config dist/index.js"
+    "start": "node --require dotenv/config dist/index.js"
   },
   "dependencies": {
     "async-retry": "^1.3.1",

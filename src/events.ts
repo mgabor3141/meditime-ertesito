@@ -24,8 +24,8 @@ export type CalendarEvent = CalendarTiming & {
 }
 
 const allDay = ({Date: date}: Entry): CalendarTiming => {
-  const day = new Date(date)
-  const nextDay = new Date(date)
+  const day = new Date(`${date}Z`)
+  const nextDay = new Date(`${date}Z`)
   nextDay.setDate(day.getDate() + 1)
 
   return {
@@ -44,7 +44,7 @@ const allDay = ({Date: date}: Entry): CalendarTiming => {
 }
 
 const dateFormat = (date: string | Date, time: string): CalendarTime => {
-  if (typeof date === 'string') date = new Date(date)
+  if (typeof date === 'string') date = new Date(`${date}Z`)
 
   return {
     dateTime: `${date.toISOString().split('T')[0]}T${time}`,
@@ -53,7 +53,7 @@ const dateFormat = (date: string | Date, time: string): CalendarTime => {
 }
 
 const muszak = (Type: LabelTypes, date: string): CalendarTiming => {
-  const day = new Date(date)
+  const day = new Date(`${date}Z`)
 
   let delelott =
     day.getDay() === 5 ? !(weekNumber(day) % 2) : !(day.getDay() % 2)

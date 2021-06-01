@@ -72,16 +72,16 @@ export const getData = async (): Promise<Data> => {
     )
 
     const newEntries = parse(nextMonthHtml)
-    process.stdout.write('Done! ')
+    process.stdout.write('Done!')
 
     if (!newEntries.length) break
 
     entries = [...entries, ...newEntries]
-    process.stdout.write(`${entries.length} entries so far\n`)
+    process.stdout.write(` ${entries.length} entries so far\n`)
   }
 
   await fs.writeFile('data/entries.json', JSON.stringify(entries))
-  process.stdout.write('No new entries.\n')
+  process.stdout.write('\n')
 
   return {entries, wardIds}
 }
