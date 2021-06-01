@@ -2,6 +2,7 @@
   "scripts": {
     "dev": "yarn build && yarn start",
     "build": "tsc",
+    "update": "git pull && yarn build",
     "start": "node --require dotenv/config dist/index.js"
   },
   "dependencies": {

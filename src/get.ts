@@ -61,7 +61,9 @@ export const getData = async (): Promise<Data> => {
   const wardIds = parseWardIds(currentMonthHtml)
 
   for (let month = 0; true; ++month) {
-    process.stdout.write(`Retrieving ${month + 1} month ahead... `)
+    process.stdout.write(
+      `Retrieving shifts for ${getDateForMonth(month).split('.')[1]}... `,
+    )
 
     const {data: nextMonthHtml} = await meditime.post(
       'WardSchedule/MoveCalendar',
@@ -107,7 +109,7 @@ export const getData = async (): Promise<Data> => {
 
   for (let month = 0; true; ++month) {
     process.stdout.write(
-      `Retrieving night shifts for ${month + 1} month ahead... `,
+      `Retrieving night shifts for ${getDateForMonth(month).split('.')[1]}... `,
     )
 
     const {data: nextMonthHtml} = await meditime.post(

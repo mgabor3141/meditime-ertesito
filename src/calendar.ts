@@ -139,7 +139,11 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
       ).data.items?.map(({id}) => id),
     )
 
-    console.log({localIds, inCalendarIds})
+    console.log(
+      `  Entries found: ${localIds.size} Entries in calendar: ${
+        inCalendarIds.size
+      } (${localIds.size - inCalendarIds.size})`,
+    )
 
     if (process.env.FORCE_REFRESH_EVENTS === 'true') {
       // Remove all events then add all events
