@@ -43,8 +43,14 @@ const allDay = ({Date: date}: Entry): CalendarTiming => {
   }
 }
 
-const dateFormat = (date: string | Date, time: string): CalendarTime => {
+const dateFormat = (
+  date: string | Date,
+  time: string,
+  dayOffset?: number,
+): CalendarTime => {
   if (typeof date === 'string') date = new Date(`${date}Z`)
+
+  if (dayOffset) date.setDate(date.getDate() + dayOffset)
 
   return {
     dateTime: `${date.toISOString().split('T')[0]}T${time}`,
@@ -82,6 +88,7 @@ export type LabelTypes =
   | 'SZAB'
   | 'SZB'
   | 'TAN'
+  | 'ÜGY'
 
 const getTiming = (entry: Entry): CalendarTiming => {
   const {Type, Date: date} = entry
@@ -93,6 +100,10 @@ const getTiming = (entry: Entry): CalendarTiming => {
       HM: {
         start: dateFormat(date, '07:30:00'),
         end: dateFormat(date, '19:30:00'),
+      },
+      ÜGY: {
+        start: dateFormat(date, '19:30:00'),
+        end: dateFormat(date, '07:30:00', 1),
       },
     },
     Type,
@@ -118,7 +129,7 @@ export const entryToEvent = (
 
   let summary: string = Type
 
-  if (Type === 'M1' || Type === 'M2' || Type === 'HM')
+  if (WardId && (Type === 'M1' || Type === 'M2' || Type === 'HM'))
     summary = `[${Type}] ${wardIds[WardId]}`
 
   return {

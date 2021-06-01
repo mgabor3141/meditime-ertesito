@@ -79,33 +79,37 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
   })
 
   for (const [id, {email}] of Object.entries(users)) {
-    const calendarId = calendars?.find(({description}) =>
+    let calendarId = calendars?.find(({description}) =>
       description?.startsWith(id.toString()),
     )?.id
 
-    if (!calendarId) throw new Error('Calendar not found')
+    // Create calendar if it doesn't exist yet
+    if (!calendarId) {
+      console.log('Creating calendar for', email)
 
-    /**
-     * # Create calendar if it doesn't exist yet
-     if not calendar_id:
-     print("Creating calendar for", name)
+      const {
+        data: {id: newCalendarId},
+      } = await calendar.calendars.insert({
+        requestBody: {
+          summary: 'Meditime',
+          description: id,
+        },
+      })
 
-     new_calendar = calendar.calendars().insert(body={
-                "summary": name
-            }).execute()
+      if (!newCalendarId) throw new Error('Could not create calendar')
 
-     print("New calendar ID:", new_calendar["id"])
+      console.log('New calendar ID:', newCalendarId)
 
-     calendar.acl().insert(calendarId=new_calendar["id"], body={
-                'scope': {
-                    'type': 'user',
-                    'value': os.getenv("SENDER_EMAIL")
-                },
-                'role': 'owner'
-            }).execute()
+      await calendar.acl.insert({
+        calendarId: newCalendarId,
+        requestBody: {
+          scope: {type: 'user', value: process.env.SENDER_EMAIL},
+          role: 'owner',
+        },
+      })
 
-     calendar_id = new_calendar["id"]
-     */
+      calendarId = newCalendarId
+    }
 
     console.log(`Processing calendar for ${id} ${email}`)
 

@@ -5,10 +5,10 @@ import {WardIds} from './get'
 export type Entry = {
   Id: number
   UserId: number
-  WardId: number
   Date: string
-  Text: string
   Type: LabelTypes
+  Text?: string
+  WardId?: number
 }
 
 export const parse = (html: string): Entry[] => {
@@ -23,6 +23,22 @@ export const parse = (html: string): Entry[] => {
 
       return entryData
     })
+}
+
+export const parseNight = (html: string): Entry[] => {
+  const $ = cheerio.load(html)
+
+  return $('table')
+    .find('span.allowdragdrop')
+    .toArray()
+    .map((element) => JSON.parse(element.attribs.dragproperties))
+    .filter(({Text}) => Text === 'ÜGY')
+    .map(({Id, UserId, Date, Text}) => ({
+      Id,
+      UserId,
+      Date,
+      Type: Text,
+    }))
 }
 
 export const parseWardIds = (html: string): WardIds => {
