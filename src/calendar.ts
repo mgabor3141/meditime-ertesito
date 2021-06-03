@@ -78,7 +78,12 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
     fields: 'items(id,summary,description)',
   })
 
+  type Diff = {added: CalendarEvent[]; removed: CalendarEvent[]}
+  const diff: Record<string, Diff> = {}
+
   for (const [id, {email}] of Object.entries(users)) {
+    diff[id] = {added: [], removed: []}
+
     let calendarId = calendars?.find(({description}) =>
       description?.startsWith(id.toString()),
     )?.id
@@ -128,27 +133,32 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
     const beginningOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
     // Get events from calendar
-    const inCalendarIds = new Set(
-      (
-        await calendar.events.list({
-          calendarId,
-          timeMin: beginningOfMonth.toISOString(),
-          maxResults: 2500,
-          fields: 'items(id)',
-        })
-      ).data.items?.map(({id}) => id),
-    )
+    const inCalendarEvents = (
+      await calendar.events.list({
+        calendarId,
+        timeMin: beginningOfMonth.toISOString(),
+        maxResults: 2500,
+        fields: 'items(id,start,end,summary,description)',
+      })
+    ).data.items
+
+    const inCalendarIds = new Set(inCalendarEvents?.map(({id}) => id))
 
     // Add missing entries
     for (const event of userEntries.filter(({id}) => !inCalendarIds.has(id))) {
       await addEvent(calendarId, event)
+      diff[id].added.push(event)
     }
 
     // Remove entries that are no longer valid
-    for (const eventId of [...inCalendarIds].filter(
-      (eventId) => eventId && !localIds.has(eventId),
-    )) {
-      eventId && (await removeEvent(calendarId, eventId))
-    }
+    if (inCalendarEvents)
+      for (const event of inCalendarEvents?.filter(
+        ({id}) => id && !localIds.has(id),
+      )) {
+        event.id && (await removeEvent(calendarId, event.id))
+        diff[id].removed.push(event as CalendarEvent)
+      }
   }
+
+  return diff
 }

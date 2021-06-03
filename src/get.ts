@@ -85,7 +85,9 @@ export const getData = async (): Promise<Data> => {
     entries = [...entries, ...newEntries]
   }
 
-  process.stdout.write(` Done! ${entries.length} entries so far\nRetrieving night shifts`)
+  process.stdout.write(
+    ` Done! ${entries.length} entries so far\nRetrieving night shifts`,
+  )
 
   // Night shift schedule
   const {data: currentMonthNightShiftHtml} = await meditime.post(

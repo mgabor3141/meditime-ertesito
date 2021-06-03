@@ -4,7 +4,9 @@ import {populateCalendars} from './calendar'
 const main = async () => {
   const data = await getData()
 
-  await populateCalendars(data)
+  const diff = await populateCalendars(data)
+
+  console.log(JSON.stringify(diff))
 }
 
 main()
