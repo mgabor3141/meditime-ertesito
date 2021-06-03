@@ -139,23 +139,6 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
       ).data.items?.map(({id}) => id),
     )
 
-    console.log(
-      `  Entries found: ${localIds.size} Entries in calendar: ${
-        inCalendarIds.size
-      } (${localIds.size - inCalendarIds.size})`,
-    )
-
-    if (process.env.FORCE_REFRESH_EVENTS === 'true') {
-      // Remove all events then add all events
-      for (const eventId of [...inCalendarIds]) {
-        eventId && (await removeEvent(calendarId, eventId))
-      }
-      for (const event of userEntries) {
-        await addEvent(calendarId, event)
-      }
-      continue
-    }
-
     // Add missing entries
     for (const event of userEntries.filter(({id}) => !inCalendarIds.has(id))) {
       await addEvent(calendarId, event)

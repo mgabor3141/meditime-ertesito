@@ -44,7 +44,7 @@ export const getData = async (): Promise<Data> => {
     },
   })
 
-  process.stdout.write(`Retrieving shifts for current month... `)
+  process.stdout.write('Retrieving shifts')
   const {data: currentMonthHtml} = await meditime.post(
     'WardSchedule/MonthlyInitGrouped?doctor=True',
     'X-Requested-With=XMLHttpRequest',
@@ -56,14 +56,10 @@ export const getData = async (): Promise<Data> => {
   )
 
   let entries = parse(currentMonthHtml)
-  console.log(`Done! ${entries.length} entries so far`)
-
   const wardIds = parseWardIds(currentMonthHtml)
 
   for (let month = 0; true; ++month) {
-    process.stdout.write(
-      `Retrieving shifts for ${getDateForMonth(month).split('.')[1]}... `,
-    )
+    process.stdout.write('.')
 
     const {data: nextMonthHtml} = await meditime.post(
       'WardSchedule/MoveCalendar',
@@ -83,16 +79,13 @@ export const getData = async (): Promise<Data> => {
     )
 
     const newEntries = parse(nextMonthHtml)
-    process.stdout.write('Done!')
 
-    if (!newEntries.length) {
-      process.stdout.write('\n')
-      break
-    }
+    if (!newEntries.length) break
 
     entries = [...entries, ...newEntries]
-    process.stdout.write(` ${entries.length} entries so far\n`)
   }
+
+  process.stdout.write(` Done! ${entries.length} entries so far\nRetrieving night shifts`)
 
   // Night shift schedule
   const {data: currentMonthNightShiftHtml} = await meditime.post(
@@ -108,10 +101,7 @@ export const getData = async (): Promise<Data> => {
   entries = [...entries, ...parseNight(currentMonthNightShiftHtml)]
 
   for (let month = 0; true; ++month) {
-    process.stdout.write(
-      `Retrieving night shifts for ${getDateForMonth(month).split('.')[1]}... `,
-    )
-
+    process.stdout.write('.')
     const {data: nextMonthHtml} = await meditime.post(
       'GlobalSchedule/MoveCalendar',
       null,
@@ -128,19 +118,15 @@ export const getData = async (): Promise<Data> => {
     )
 
     const newEntries = parseNight(nextMonthHtml)
-    process.stdout.write('Done!')
 
-    if (!newEntries.length) {
-      process.stdout.write('\n')
-      break
-    }
+    if (!newEntries.length) break
 
     entries = [...entries, ...newEntries]
-    process.stdout.write(` ${entries.length} entries so far\n`)
   }
 
+  console.log(` Done! ${entries.length} entries total`)
   entries = _.uniqBy(entries, ({Id}) => Id)
-
+  console.log(`${entries.length} entries after filtering`)
   await fs.writeFile('data/entries.json', JSON.stringify(entries))
 
   return {entries, wardIds}

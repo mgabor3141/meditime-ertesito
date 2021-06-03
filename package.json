@@ -2,7 +2,7 @@
   "scripts": {
     "dev": "yarn build && yarn start",
     "build": "tsc",
-    "update": "git pull && yarn build",
+    "update": "git pull && yarn && yarn build",
     "start": "node --require dotenv/config dist/index.js"
   },
   "dependencies": {
@@ -13,6 +13,7 @@
     "dotenv": "^10.0.0",
     "googleapis": "^74.2.0",
     "lodash": "^4.17.21",
+    "object-hash": "^2.2.0",
     "tough-cookie": "^4.0.0",
     "weeknumber": "^1.1.2"
   },
@@ -20,6 +21,7 @@
     "@types/async-retry": "^1.4.2",
     "@types/lodash": "^4.14.170",
     "@types/node": "^12.20.7",
+    "@types/object-hash": "^2.1.0",
     "@types/tough-cookie": "^4.0.0",
     "prettier": "^2.3.0",
     "typescript": "^4.3.2"

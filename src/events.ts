@@ -1,3 +1,4 @@
+import hash from 'object-hash'
 import {Entry} from './parse'
 import {WardIds} from './get'
 import _ from 'lodash'
@@ -132,12 +133,16 @@ export const entryToEvent = (
   if (WardId && (Type === 'M1' || Type === 'M2' || Type === 'HM'))
     summary = `[${Type}] ${wardIds[WardId]}`
 
-  return {
+  const event = {
     ...getTiming(entry),
-    id: Id.toString(),
+    id: '',
     summary,
     description: `${Text}\nid: ${Id}`,
   }
+
+  event.id = hash(event, {excludeKeys: (key) => key === 'id' })
+
+  return event
 }
 
 export const processEvents = (events: CalendarEvent[]): CalendarEvent[] => {
