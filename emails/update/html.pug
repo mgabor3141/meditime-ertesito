@@ -1,11 +1,12 @@
 mixin renderEvent(event)
     - const [_, tag, text] = event.summary.match(/\[?([^\]]*)\]?\s*(.*)/)
 
-    .entry
-        span.timeString #{event.timeString}
-        span.inlineBlock
+    tr.entry
+        td.timeString
+            span.timeString #{event.timeString}
+        td
             span.tag(class=tag) #{tag}
-            | #{text}
+        td.grow #{text}
 
 // ========
 
@@ -13,7 +14,6 @@ doctype html
 head
     meta(name='viewport' content='width=device-width')
     meta(http-equiv='Content-Type' content='text/html; charset=UTF-8')
-    // title Simple Transactional Email
     link(rel="stylesheet", href="/css/email.css", data-inline)
 
 span.preheader #{diff.added.length} új, #{diff.removed.length} törölt bejegyzés |
@@ -33,12 +33,12 @@ table.body(role='presentation' border='0' cellpadding='0' cellspacing='0')
                                     td
 
                                         p Kedves #{name}!
-                                        p Változás történt a Meditime beosztásodban:
+                                        p Változások történtek a Meditime beosztásodban:
 
                                         if diff.removed.length
                                             h3 Törölt bejegyzés#{diff.removed.length > 1 ? 'ek' : ''}
 
-                                            p
+                                            table.entries(role='presentation' border='0' cellpadding='0' cellspacing='0')
                                                 each event in diff.removed
                                                     +renderEvent(event)
 
@@ -46,11 +46,11 @@ table.body(role='presentation' border='0' cellpadding='0' cellspacing='0')
                                         if diff.added.length
                                             h3 Új bejegyzés#{diff.added.length > 1 ? 'ek' : ''}
 
-                                            p
+                                            table.entries(role='presentation' border='0' cellpadding='0' cellspacing='0')
                                                 each event in diff.added
                                                     +renderEvent(event)
 
-                                        a(href='https://meditime.today/') Megnyitás Meditime-ban
+                                        a.meditime(href='https://meditime.today/') Meditime
                     // END MAIN CONTENT AREA
                 // END CENTERED WHITE CONTAINER
                 // START FOOTER

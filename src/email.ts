@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import {Diff} from './calendar'
 import Email from 'email-templates'
 import {CalendarEvent} from './events'
@@ -5,9 +6,8 @@ import {users} from './users'
 
 const email = new Email({
   message: {
-    from: process.env.SENDER_EMAIL,
+    from: `Meditime Értesítő <${process.env.SENDER_EMAIL}>`,
   },
-  send: true,
   transport: {
     service: 'gmail',
     auth: {
@@ -28,40 +28,26 @@ const eventFormat = ({start, end, ...eventProps}: CalendarEvent) => {
   if (start.date) endDate.setDate(endDate.getDate() - 1)
 
   return {
-    timeString: start.date
-      ? `${startDate
-          .toLocaleString('hu-HU', {
+    timeString:
+      (start.date && startDate.getTime() === endDate.getTime()) ||
+      start.dateTime
+        ? `${startDate.toLocaleString('hu-HU', {
             month: 'short',
             day: '2-digit',
-          })
-          .replace(/.$/, '')}${
-          startDate.getTime() !== endDate.getTime()
-            ? `-${endDate.toLocaleString('hu-HU', {
-                ...(startDate.getMonth() !== endDate.getMonth() && {
-                  month: 'short',
-                }),
-                day: '2-digit',
-              })}.`
-            : ''
-        }`.replace(/\.\.$/, '.')
-      : start.dateTime
-      ? `${startDate.toLocaleTimeString('hu-HU', {
-          month: 'short',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })}-${endDate.toLocaleTimeString('hu-HU', {
-          ...(startDate.getMonth() !== endDate.getMonth() && {
-            month: 'short',
-          }),
-          ...(startDate.getDate() !== endDate.getDate() && {
+            weekday: 'short',
+          })}`
+        : `${startDate
+            .toLocaleString('hu-HU', {
+              month: 'short',
+              day: '2-digit',
+            })
+            .replace(/.$/, '')}-${endDate.toLocaleString('hu-HU', {
+            ...(startDate.getMonth() !== endDate.getMonth() && {
+              month: 'short',
+            }),
             day: '2-digit',
-          }),
-          hour: '2-digit',
-          minute: '2-digit',
-        })}`
-      : `${Object.values(start).join(' ')} ${Object.values(end).join(' ')}`,
+          })}.`.replace(/\.\.$/, '.'),
+    startDate,
     start,
     end,
     ...eventProps,
@@ -73,8 +59,14 @@ export const sendEmails = async (diff: Diff) => {
     if (!userDiff.added.length && !userDiff.removed.length) continue
 
     const processedDiff = {
-      added: userDiff.added.map(eventFormat),
-      removed: userDiff.removed.map(eventFormat),
+      added: _.sortBy(
+        userDiff.added.map(eventFormat),
+        ({startDate}) => startDate,
+      ),
+      removed: _.sortBy(
+        userDiff.removed.map(eventFormat),
+        ({startDate}) => startDate,
+      ),
     }
 
     email

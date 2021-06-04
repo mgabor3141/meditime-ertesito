@@ -1,10 +1,20 @@
 /* Custom styles */
 
 .timeString {
-    display: inline-block;
     text-align: right;
-    width: 160px;
-    max-width: 160px;
+    white-space: nowrap;
+}
+
+td.grow {
+    width: 100%;
+}
+
+table.entries {
+    border-spacing: 0 3px;
+}
+
+tr.entry td {
+    vertical-align: baseline;
 }
 
 .tag {
@@ -17,7 +27,7 @@
     text-align: center;
     vertical-align: baseline;
     padding: 2px 2px 0 0;
-    margin: 1px 5px;
+    margin: 0 5px;
     background-color: #169090;
 }
 
@@ -37,22 +47,13 @@
     background-color: #006fb8;
 }
 
-.inlineBlock {
+a.meditime {
     display: inline-block;
+    margin: 15px 0 10px 0;
 }
 
 .justify {
     text-align: justify;
-}
-
-@media only screen and (max-width: 500px) {
-    .timeString {
-        width: auto !important;
-    }
-
-    .entry {
-        padding: 10px 0 !important;
-    }
 }
 
 /* Stylesheet from https://github.com/leemunroe/responsive-html-email-template */
