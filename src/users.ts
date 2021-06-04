@@ -1,6 +1,7 @@
 import fs from 'fs'
 
 export type User = {
+  name?: string
   email: string
 }
 

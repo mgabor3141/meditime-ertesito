@@ -1,0 +1,70 @@
+mixin renderEvent(event)
+    - const [_, tag, text] = event.summary.match(/\[?([^\]]*)\]?\s*(.*)/)
+
+    if event.start.date
+        | #{event.start.date} - #{event.end.date} (végdátum nélkül)
+    else
+        | #{event.start.dateTime} - #{event.end.dateTime}
+    span.tag(class=tag) #{tag}
+    |  #{text}
+    br
+
+// ========
+
+doctype html
+head
+    meta(name='viewport' content='width=device-width')
+    meta(http-equiv='Content-Type' content='text/html; charset=UTF-8')
+    // title Simple Transactional Email
+    link(rel="stylesheet", href="/css/email.css", data-inline)
+
+span.preheader #{diff.added.length} új, #{diff.removed.length} törölt bejegyzés |
+
+table.body(role='presentation' border='0' cellpadding='0' cellspacing='0')
+    tr
+        td &nbsp;
+        td.container
+            .content
+                // START CENTERED WHITE CONTAINER
+                table.main(role='presentation')
+                    // START MAIN CONTENT AREA
+                    tr
+                        td.wrapper
+                            table(role='presentation' border='0' cellpadding='0' cellspacing='0')
+                                tr
+                                    td
+
+                                        // p Kedves #{name}!
+                                        p Változás történt a Meditime beosztásodban:
+
+                                        if diff.removed.length
+                                            h3 Törölt bejegyzés#{diff.removed.length > 1 ? 'ek' : ''}
+
+                                            p
+                                                each event in diff.removed
+                                                    +renderEvent(event)
+
+
+                                        if diff.added.length
+                                            h3 Új bejegyzés#{diff.added.length > 1 ? 'ek' : ''}
+
+                                            p
+                                                each event in diff.added
+                                                    +renderEvent(event)
+
+                                        a(href='https://meditime.today/') Megnyitás Meditime-ban
+                    // END MAIN CONTENT AREA
+                // END CENTERED WHITE CONTAINER
+                // START FOOTER
+                .footer
+                    table(role='presentation' border='0' cellpadding='0' cellspacing='0')
+                        tr
+                            td.content-block
+                                p.justify
+                                    | A Meditime óránként van ellenőrizve, a személyre szóló naptárad is ezzel egyidőben frissül.
+                                    | Válaszlevélben jelezd, ha kérésed vagy kérdésed van, illetve ha nem szeretnél több ilyen értesítést kapni.
+                                    | Az adatok tájékoztató jellegűek, a helyességükért vagy teljességükért felelősséget senki nem vállal.
+                        tr
+                            td.content-block.powered-by
+                                | Meditime Értesítő - v#{process.env.npm_package_version}
+                // END FOOTER

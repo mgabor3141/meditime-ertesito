@@ -20,7 +20,7 @@ const getDateForMonth = (month: number) => {
 }
 
 export const getData = async (): Promise<Data> => {
-  if (process.env.DEVELOPMENT === 'true')
+  if (process.env.LOCAL_SOURCE === 'true')
     return {
       entries: JSON.parse((await fs.readFile('data/entries.json')).toString()),
       wardIds: JSON.parse((await fs.readFile('data/ward_ids.json')).toString()),

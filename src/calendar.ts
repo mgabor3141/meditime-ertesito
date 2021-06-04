@@ -71,6 +71,11 @@ const removeEvent = async (calendarId: string, eventId: string) => {
   })
 }
 
+export type Diff = Record<
+  string,
+  {added: CalendarEvent[]; removed: CalendarEvent[]}
+>
+
 export const populateCalendars = async ({entries, wardIds}: Data) => {
   const {
     data: {items: calendars},
@@ -78,8 +83,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
     fields: 'items(id,summary,description)',
   })
 
-  type Diff = {added: CalendarEvent[]; removed: CalendarEvent[]}
-  const diff: Record<string, Diff> = {}
+  const diff: Diff = {}
 
   for (const [id, {email}] of Object.entries(users)) {
     diff[id] = {added: [], removed: []}
