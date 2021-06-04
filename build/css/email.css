@@ -1,5 +1,12 @@
 /* Custom styles */
 
+.timeString {
+    display: inline-block;
+    text-align: right;
+    width: 160px;
+    max-width: 160px;
+}
+
 .tag {
     color: white;
     font-family: 'Open Sans', sans-serif;
@@ -8,24 +15,44 @@
     width: 54px;
     display: inline-block;
     text-align: center;
-    padding: 2px 2px 2px 0;
-    margin: 1px 3px;
+    vertical-align: baseline;
+    padding: 2px 2px 0 0;
+    margin: 1px 5px;
+    background-color: #169090;
 }
 
 .tag.M1, .tag.M2, .tag.HM {
     background-color: #40c667;
 }
 
-.tag.SZAB, .tag.KGY, .tag.PIH {
+.tag.SZAB, .tag.KGY, .tag.PIH, .tag.BET {
     background-color: #ff0000;
+}
+
+.tag.SZB, .tag.NSZB {
+    background-color: #a19e9e;
 }
 
 .tag.TAN {
     background-color: #006fb8;
 }
 
+.inlineBlock {
+    display: inline-block;
+}
+
 .justify {
     text-align: justify;
+}
+
+@media only screen and (max-width: 500px) {
+    .timeString {
+        width: auto !important;
+    }
+
+    .entry {
+        padding: 10px 0 !important;
+    }
 }
 
 /* Stylesheet from https://github.com/leemunroe/responsive-html-email-template */

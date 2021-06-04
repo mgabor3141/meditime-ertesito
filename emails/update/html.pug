@@ -1,13 +1,11 @@
 mixin renderEvent(event)
     - const [_, tag, text] = event.summary.match(/\[?([^\]]*)\]?\s*(.*)/)
 
-    if event.start.date
-        | #{event.start.date} - #{event.end.date} (végdátum nélkül)
-    else
-        | #{event.start.dateTime} - #{event.end.dateTime}
-    span.tag(class=tag) #{tag}
-    |  #{text}
-    br
+    .entry
+        span.timeString #{event.timeString}
+        span.inlineBlock
+            span.tag(class=tag) #{tag}
+            | #{text}
 
 // ========
 
@@ -34,7 +32,7 @@ table.body(role='presentation' border='0' cellpadding='0' cellspacing='0')
                                 tr
                                     td
 
-                                        // p Kedves #{name}!
+                                        p Kedves #{name}!
                                         p Változás történt a Meditime beosztásodban:
 
                                         if diff.removed.length
@@ -62,7 +60,7 @@ table.body(role='presentation' border='0' cellpadding='0' cellspacing='0')
                             td.content-block
                                 p.justify
                                     | A Meditime óránként van ellenőrizve, a személyre szóló naptárad is ezzel egyidőben frissül.
-                                    | Válaszlevélben jelezd, ha kérésed vagy kérdésed van, illetve ha nem szeretnél több ilyen értesítést kapni.
+                                    | Válaszlevélben jelezd, ha kérésed, kérdésed, vagy bármilyen megjegyzésed van, illetve ha nem szeretnél több ilyen értesítést kapni.
                                     | Az adatok tájékoztató jellegűek, a helyességükért vagy teljességükért felelősséget senki nem vállal.
                         tr
                             td.content-block.powered-by
