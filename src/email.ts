@@ -15,10 +15,7 @@ const email = new Email({
       pass: process.env.SENDER_PW,
     },
   },
-  juice: true,
-  juiceResources: {
-    inlinePseudoElements: true,
-  },
+  send: true,
 })
 
 const eventFormat = ({start, end, ...eventProps}: CalendarEvent) => {

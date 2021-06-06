@@ -443,6 +443,11 @@ follow-redirects@^1.10.0:
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.1.tgz#d9114ded0a1cfdd334e164e6662ad02bfd91ff43"
   integrity sha512-HWqDgT7ZEkqRzBvc2s64vSZ/hfOceEol3ac/7tKwzuvEyWx3/4UegXh5oBOIotkGsObyk3xznnSRVADBgWSQVg==
 
+full-icu@^1.3.4:
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/full-icu/-/full-icu-1.3.4.tgz#4e09b2f6a30e9f3d2eebc1c08f90b21b037e22a9"
+  integrity sha512-BERy9j2ybYSfP8QmXyg496NjVrGXfM73TZckQ5s5hgDV2lpKshjGfPEYYWU3hhE2kU8atZXUZNLSeNz4OQ8hNA==
+
 function-bind@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
