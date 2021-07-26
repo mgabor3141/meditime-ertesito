@@ -52,10 +52,12 @@ table.body(role='presentation' border='0' cellpadding='0' cellspacing='0')
                                             each event in diff.added
                                                 +renderEvent(event)
 
+                                        hr
+
                                         p.calendar
                                             a(href=`https://calendar.google.com/calendar/r?cid=${calendarId}`)
                                                 span.calendarIcon 📅
-                                                span.addCalendar Beosztás hozzáadása Google Calendar-hoz
+                                                span.addCalendar Naptár hozzáadása
                                             br
                                             small
                                                 | Azonosító:
