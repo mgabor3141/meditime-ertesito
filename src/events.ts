@@ -2,7 +2,6 @@ import hash from 'object-hash'
 import {Entry} from './parse'
 import {WardIds} from './get'
 import _ from 'lodash'
-// @ts-expect-error No types
 import {weekNumber} from 'weeknumber'
 
 type CalendarTime = {

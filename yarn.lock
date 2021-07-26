@@ -1231,10 +1231,10 @@ web-resource-inliner@^5.0.0:
     node-fetch "^2.6.0"
     valid-data-url "^3.0.0"
 
-weeknumber@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/weeknumber/-/weeknumber-1.1.2.tgz#39bed037d6e2b94ab01b0ec8d11ff3d01d034984"
-  integrity sha512-rDgZQ6tpXEUb4t6t47OP4zXtTGYa8gOoOP2xI55oAv+aaNkvRK+2iuH2sk9eEpRAyDaAuAfy8i1TBfwmcG6Dqw==
+weeknumber@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/weeknumber/-/weeknumber-1.2.1.tgz#f407e7a2eaef1e625610404d1dcbab845b891e85"
+  integrity sha512-F5AbhjKQhRDHweBnDuYRiJvS9/2f19/3/431+ZiZQb/jTgLKuAg8kwZzgS9/9a1SyA1KeJPEfQpf6dggaw7NBg==
 
 with@^7.0.0:
   version "7.0.2"

@@ -17,7 +17,7 @@
     "lodash": "^4.17.21",
     "object-hash": "^2.2.0",
     "tough-cookie": "^4.0.0",
-    "weeknumber": "^1.1.2"
+    "weeknumber": "^1.2.1"
   },
   "devDependencies": {
     "@types/async-retry": "^1.4.2",
