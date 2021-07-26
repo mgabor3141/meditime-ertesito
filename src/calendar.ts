@@ -90,12 +90,13 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
   })
 
   const diff: Diff = {}
+  const calendarIds: Record<string, string> = {}
 
-  for (const [id, {email}] of Object.entries(users)) {
-    diff[id] = {added: [], removed: []}
+  for (const [userId, {email}] of Object.entries(users)) {
+    diff[userId] = {added: [], removed: []}
 
     let calendarId = calendars?.find(({description}) =>
-      description?.startsWith(id.toString()),
+      description?.startsWith(userId.toString()),
     )?.id
 
     // Create calendar if it doesn't exist yet
@@ -107,7 +108,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
       } = await calendar.calendars.insert({
         requestBody: {
           summary: 'Meditime',
-          description: id,
+          description: userId,
         },
       })
 
@@ -126,12 +127,14 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
       calendarId = newCalendarId
     }
 
-    console.log(`Processing calendar for ${id} ${email}`)
+    calendarIds[userId] = calendarId
+
+    console.log(`Processing calendar for ${userId} ${email}`)
 
     const userEntries = processEvents(
       _.compact(
         entries
-          .filter(({UserId}) => UserId.toString() === id)
+          .filter(({UserId}) => UserId.toString() === userId)
           .map((entry) => entryToEvent(entry, wardIds)),
       ),
     )
@@ -165,7 +168,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
         calendarTimeToDate(start) >= beginningOfMonth,
     )) {
       await addEvent(calendarId, event)
-      diff[id].added.push(event)
+      diff[userId].added.push(event)
     }
 
     // Remove entries that are no longer valid
@@ -174,9 +177,9 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
         ({id}) => id && !localIds.has(id),
       )) {
         event.id && (await removeEvent(calendarId, event.id))
-        diff[id].removed.push(event as CalendarEvent)
+        diff[userId].removed.push(event as CalendarEvent)
       }
   }
 
-  return diff
+  return {diff, calendarIds}
 }

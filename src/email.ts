@@ -50,7 +50,10 @@ const eventFormat = ({start, end, ...eventProps}: CalendarEvent) => {
   }
 }
 
-export const sendEmails = async (diff: Diff) => {
+export const sendEmails = async (
+  diff: Diff,
+  calendarIds: Record<string, string>,
+) => {
   for (const [userId, userDiff] of Object.entries(diff)) {
     if (!userDiff.added.length && !userDiff.removed.length) continue
 
@@ -73,6 +76,7 @@ export const sendEmails = async (diff: Diff) => {
         },
         locals: {
           name: users[userId].name,
+          calendarId: calendarIds[userId],
           diff: processedDiff,
         },
       })

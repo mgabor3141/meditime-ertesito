@@ -12,7 +12,7 @@ mixin renderEvent(event)
 
 doctype html
 head
-    meta(name='viewport' content='width=device-width')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
     meta(http-equiv='Content-Type' content='text/html; charset=UTF-8')
     link(rel="stylesheet", href="/css/email.css", data-inline)
 
@@ -33,24 +33,35 @@ table.body(role='presentation' border='0' cellpadding='0' cellspacing='0')
                                     td
 
                                         p Kedves #{name}!
-                                        p Változások történtek a Meditime beosztásodban:
+                                        p Változások történtek a #[a(href='https://meditime.today/') Meditime] beosztásodban:
 
-                                        if diff.removed.length
-                                            h3 Törölt bejegyzés#{diff.removed.length > 1 ? 'ek' : ''}
+                                        table.entries(role='presentation' border='0' cellpadding='0' cellspacing='0')
+                                            if diff.removed.length
+                                                tr
+                                                    td(colspan='3')
+                                                        h3 Törölt bejegyzés#{diff.removed.length > 1 ? 'ek' : ''}
 
-                                            table.entries(role='presentation' border='0' cellpadding='0' cellspacing='0')
                                                 each event in diff.removed
                                                     +renderEvent(event)
 
+                                            if diff.added.length
+                                                tr
+                                                    td(colspan='3')
+                                                        h3 Új bejegyzés#{diff.added.length > 1 ? 'ek' : ''}
 
-                                        if diff.added.length
-                                            h3 Új bejegyzés#{diff.added.length > 1 ? 'ek' : ''}
+                                            each event in diff.added
+                                                +renderEvent(event)
 
-                                            table.entries(role='presentation' border='0' cellpadding='0' cellspacing='0')
-                                                each event in diff.added
-                                                    +renderEvent(event)
+                                        p.calendar
+                                            a(href=`https://calendar.google.com/calendar/r?cid=${calendarId}`)
+                                                span.calendarIcon 📅
+                                                span.addCalendar Beosztás hozzáadása Google Calendar-hoz
+                                            br
+                                            small
+                                                | Azonosító:
+                                                |
+                                                a(href=`mailto:${calendarId}`) #{calendarId}
 
-                                        a.meditime(href='https://meditime.today/') Meditime
                     // END MAIN CONTENT AREA
                 // END CENTERED WHITE CONTAINER
                 // START FOOTER
