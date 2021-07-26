@@ -15,7 +15,6 @@ const email = new Email({
       pass: process.env.SENDER_PW,
     },
   },
-  send: true,
 })
 
 const eventFormat = ({start, end, ...eventProps}: CalendarEvent) => {
