@@ -4,7 +4,7 @@ import tough from 'tough-cookie'
 import {Entry, parse, parseNight, parseWardIds} from './parse'
 import {promises as fs} from 'fs'
 import _ from 'lodash'
-import {scriptStartDate} from './scriptStartDate'
+import {createDateAsUTC, scriptStartDate} from './dates'
 
 export type WardIds = Record<string, string>
 
@@ -14,18 +14,20 @@ export type Data = {
 }
 
 const getDateForMonth = (month: number) => {
-  const date = new Date(scriptStartDate)
+  const date = createDateAsUTC(scriptStartDate)
   date.setDate(1)
   date.setMonth(date.getMonth() + month)
   return date.toISOString().split('T')[0].replace(/-/g, '.')
 }
 
 export const getData = async (): Promise<Data> => {
-  if (process.env.LOCAL_SOURCE === 'true')
+  if (process.env.LOCAL_SOURCE === 'true') {
+    console.log('Retrieving shifts from file instead of Meditime')
     return {
       entries: JSON.parse((await fs.readFile('data/entries.json')).toString()),
       wardIds: JSON.parse((await fs.readFile('data/ward_ids.json')).toString()),
     }
+  }
 
   axiosCookieJarSupport(axios)
 
@@ -46,7 +48,9 @@ export const getData = async (): Promise<Data> => {
   })
 
   process.stdout.write('Retrieving shifts')
-  const {data: currentMonthHtml} = await meditime.post(
+
+  // Go to page
+  await meditime.post(
     'WardSchedule/MonthlyInitGrouped?doctor=True',
     'X-Requested-With=XMLHttpRequest',
     {
@@ -56,10 +60,28 @@ export const getData = async (): Promise<Data> => {
     },
   )
 
-  let entries = parse(currentMonthHtml)
-  const wardIds = parseWardIds(currentMonthHtml)
+  // Go back a month
+  const {data: firstMonthHtml} = await meditime.post(
+    'WardSchedule/MoveCalendar',
+    null,
+    {
+      params: {
+        date: getDateForMonth(0),
+        way: -1,
+        isMonthly: true,
+        isGrouped: true,
+        isDoctor: true,
+      },
+      headers: {
+        referer: 'https://meditime.today/Main/Default',
+      },
+    },
+  )
 
-  for (let month = 0; true; ++month) {
+  let entries = parse(firstMonthHtml)
+  const wardIds = parseWardIds(firstMonthHtml)
+
+  for (let month = -1; true; ++month) {
     process.stdout.write('.')
 
     const {data: nextMonthHtml} = await meditime.post(
@@ -91,7 +113,7 @@ export const getData = async (): Promise<Data> => {
   )
 
   // Night shift schedule
-  const {data: currentMonthNightShiftHtml} = await meditime.post(
+  await meditime.post(
     'GlobalSchedule/Init?isMonthly=True',
     'X-Requested-With=XMLHttpRequest',
     {
@@ -101,9 +123,24 @@ export const getData = async (): Promise<Data> => {
     },
   )
 
-  entries = [...entries, ...parseNight(currentMonthNightShiftHtml)]
+  const {data: firstMonthNightShiftHtml} = await meditime.post(
+    'GlobalSchedule/MoveCalendar',
+    null,
+    {
+      params: {
+        date: getDateForMonth(0),
+        way: -1,
+        isMonthly: true,
+      },
+      headers: {
+        referer: 'https://meditime.today/Main/Default',
+      },
+    },
+  )
 
-  for (let month = 0; true; ++month) {
+  entries = [...entries, ...parseNight(firstMonthNightShiftHtml)]
+
+  for (let month = -1; true; ++month) {
     process.stdout.write('.')
     const {data: nextMonthHtml} = await meditime.post(
       'GlobalSchedule/MoveCalendar',

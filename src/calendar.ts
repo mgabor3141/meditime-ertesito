@@ -1,10 +1,15 @@
 import {Data} from './get'
 import {google} from 'googleapis'
 import {users} from './users'
-import {CalendarEvent, entryToEvent, processEvents} from './events'
+import {
+  CalendarEvent,
+  calendarTimeToDate,
+  entryToEvent,
+  processEvents,
+} from './events'
 import {retry} from './helpers'
 import _ from 'lodash'
-import {scriptStartDate} from './scriptStartDate'
+import {createDateAsUTC, scriptStartDate} from './dates'
 
 const auth = new google.auth.GoogleAuth({
   keyFile: 'credentials/calendar-service-account.json',
@@ -134,10 +139,8 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
     // Local events
     const localIds = new Set(userEntries.map((event) => event.id))
 
-    const beginningOfMonth = new Date(
-      scriptStartDate.getFullYear(),
-      scriptStartDate.getMonth(),
-      1,
+    const beginningOfMonth = createDateAsUTC(
+      new Date(scriptStartDate.getFullYear(), scriptStartDate.getMonth(), 1),
     )
 
     // Get events from calendar
@@ -148,12 +151,19 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
         maxResults: 2500,
         fields: 'items(id,start,end,summary,description)',
       })
-    ).data.items
+    ).data.items?.filter(
+      ({start}) => start && calendarTimeToDate(start) >= beginningOfMonth,
+    )
 
     const inCalendarIds = new Set(inCalendarEvents?.map(({id}) => id))
 
     // Add missing entries
-    for (const event of userEntries.filter(({id}) => !inCalendarIds.has(id))) {
+    for (const event of userEntries.filter(
+      ({id, start}) =>
+        !inCalendarIds.has(id) &&
+        start &&
+        calendarTimeToDate(start) >= beginningOfMonth,
+    )) {
       await addEvent(calendarId, event)
       diff[id].added.push(event)
     }

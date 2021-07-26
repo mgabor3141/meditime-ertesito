@@ -6,9 +6,9 @@ import _ from 'lodash'
 import {weekNumber} from 'weeknumber'
 
 type CalendarTime = {
-  date?: string
-  dateTime?: string
-  timeZone?: string
+  date?: string | null
+  dateTime?: string | null
+  timeZone?: string | null
 }
 
 type CalendarTiming = {
@@ -23,6 +23,9 @@ export type CalendarEvent = CalendarTiming & {
   id: string
   description: string
 }
+
+export const calendarTimeToDate = (calendarTime: CalendarTime) =>
+  new Date(calendarTime.dateTime || `${calendarTime.date}Z`)
 
 const allDay = ({Date: date}: Entry): CalendarTiming => {
   const day = new Date(`${date}Z`)
@@ -140,7 +143,7 @@ export const entryToEvent = (
     description: `${Text}\nid: ${Id}`,
   }
 
-  event.id = hash(event, {excludeKeys: (key) => key === 'id' })
+  event.id = hash(event, {excludeKeys: (key) => key === 'id'})
 
   return event
 }
