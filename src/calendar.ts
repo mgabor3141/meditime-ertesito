@@ -4,6 +4,7 @@ import {users} from './users'
 import {CalendarEvent, entryToEvent, processEvents} from './events'
 import {retry} from './helpers'
 import _ from 'lodash'
+import {scriptStartDate} from './scriptStartDate'
 
 const auth = new google.auth.GoogleAuth({
   keyFile: 'credentials/calendar-service-account.json',
@@ -133,8 +134,11 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
     // Local events
     const localIds = new Set(userEntries.map((event) => event.id))
 
-    const now = new Date()
-    const beginningOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const beginningOfMonth = new Date(
+      scriptStartDate.getFullYear(),
+      scriptStartDate.getMonth(),
+      1,
+    )
 
     // Get events from calendar
     const inCalendarEvents = (

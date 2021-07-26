@@ -4,6 +4,7 @@ import tough from 'tough-cookie'
 import {Entry, parse, parseNight, parseWardIds} from './parse'
 import {promises as fs} from 'fs'
 import _ from 'lodash'
+import {scriptStartDate} from './scriptStartDate'
 
 export type WardIds = Record<string, string>
 
@@ -13,7 +14,7 @@ export type Data = {
 }
 
 const getDateForMonth = (month: number) => {
-  const date = new Date()
+  const date = new Date(scriptStartDate)
   date.setDate(1)
   date.setMonth(date.getMonth() + month)
   return date.toISOString().split('T')[0].replace(/-/g, '.')
