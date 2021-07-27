@@ -24,7 +24,9 @@ export type CalendarEvent = CalendarTiming & {
 }
 
 export const calendarTimeToDate = (calendarTime: CalendarTime) =>
-  new Date(calendarTime.dateTime || `${calendarTime.date}Z`)
+  calendarTime.dateTime
+    ? new Date(calendarTime.dateTime?.replace(/Z$/, ''))
+    : new Date(`${calendarTime.date}T00:00`)
 
 const allDay = ({Date: date}: Entry): CalendarTiming => {
   const day = new Date(`${date}Z`)
@@ -96,7 +98,7 @@ export type LabelTypes =
 const getTiming = (entry: Entry): CalendarTiming => {
   const {Type, Date: date} = entry
 
-  const timing = _.get(
+  return _.get(
     {
       M1: muszak(Type, date),
       M2: muszak(Type, date),
@@ -112,10 +114,6 @@ const getTiming = (entry: Entry): CalendarTiming => {
     Type,
     allDay(entry),
   )
-
-  if (!timing) return allDay(entry)
-
-  return timing
 }
 
 export const entryToEvent = (
@@ -139,7 +137,9 @@ export const entryToEvent = (
     ...getTiming(entry),
     id: '',
     summary,
-    description: `${Text}\nid: ${Id}`,
+    description: `${Text}\nOsztály: ${
+      WardId ? wardIds[WardId] : ''
+    }\nEsemény azonosító: ${Id}`,
   }
 
   event.id = hash(event, {excludeKeys: (key) => key === 'id'})
@@ -164,7 +164,7 @@ export const processEvents = (events: CalendarEvent[]): CalendarEvent[] => {
       if (indexForAdjacentEvent !== -1) {
         accumulator[indexForAdjacentEvent].end.date = currentValue.end.date
       } else {
-        accumulator[accumulator.length] = currentValue
+        accumulator.push(currentValue)
       }
 
       return accumulator

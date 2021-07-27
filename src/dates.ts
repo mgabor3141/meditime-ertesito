@@ -10,4 +10,4 @@ export const createDateAsUTC = (date: Date) =>
     ),
   )
 
-export const scriptStartDate = createDateAsUTC(new Date())
+export const scriptStartDate = new Date()

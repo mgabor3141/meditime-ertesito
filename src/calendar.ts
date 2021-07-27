@@ -9,7 +9,7 @@ import {
 } from './events'
 import {retry} from './helpers'
 import _ from 'lodash'
-import {createDateAsUTC, scriptStartDate} from './dates'
+import {scriptStartDate} from './dates'
 
 const auth = new google.auth.GoogleAuth({
   keyFile: 'credentials/calendar-service-account.json',
@@ -92,7 +92,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
   const diff: Diff = {}
   const calendarIds: Record<string, string> = {}
 
-  for (const [userId, {email}] of Object.entries(users)) {
+  for (const [userId, {email, name}] of Object.entries(users)) {
     diff[userId] = {added: [], removed: []}
 
     let calendarId = calendars?.find(({description}) =>
@@ -107,7 +107,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
         data: {id: newCalendarId},
       } = await calendar.calendars.insert({
         requestBody: {
-          summary: 'Meditime',
+          summary: `Meditime - ${name}`,
           description: userId,
         },
       })
@@ -142,8 +142,14 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
     // Local events
     const localIds = new Set(userEntries.map((event) => event.id))
 
-    const beginningOfMonth = createDateAsUTC(
-      new Date(scriptStartDate.getFullYear(), scriptStartDate.getMonth(), 1),
+    const beginningOfMonth = new Date(
+      scriptStartDate.getFullYear(),
+      scriptStartDate.getMonth(),
+      1,
+      0,
+      0,
+      0,
+      0,
     )
 
     // Get events from calendar
