@@ -4,7 +4,7 @@ import tough from 'tough-cookie'
 import {Entry, parse, parseNight, parseWardIds} from './parse'
 import {promises as fs} from 'fs'
 import _ from 'lodash'
-import {createDateAsUTC, scriptStartDate} from './dates'
+import {scriptStartDate} from './dates'
 
 export type WardIds = Record<string, string>
 
@@ -13,11 +13,16 @@ export type Data = {
   wardIds: WardIds
 }
 
+const zeroPad = (num: number, places: number = 2) =>
+  String(num).padStart(places, '0')
+
 const getDateForMonth = (month: number) => {
-  const date = createDateAsUTC(scriptStartDate)
+  const date = new Date(scriptStartDate)
   date.setDate(1)
   date.setMonth(date.getMonth() + month)
-  return date.toISOString().split('T')[0].replace(/-/g, '.')
+  return `${date.getFullYear()}.${zeroPad(date.getMonth() + 1)}.${zeroPad(
+    date.getDate(),
+  )}`
 }
 
 export const getData = async (): Promise<Data> => {

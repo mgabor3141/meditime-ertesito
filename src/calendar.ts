@@ -129,7 +129,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
 
     calendarIds[userId] = calendarId
 
-    console.log(`Processing calendar for ${userId} ${email}`)
+    console.log(`Processing calendar for ${name} ${userId}`)
 
     const userEntries = processEvents(
       _.compact(
