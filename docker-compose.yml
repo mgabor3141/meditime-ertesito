@@ -10,4 +10,5 @@ services:
       - MEDITIME_PASSWORD=${MEDITIME_PASSWORD}
       - SENDER_EMAIL=${SENDER_EMAIL}
       - SENDER_PW=${SENDER_PW}
-      - LOCAL_SOURCE=${LOCAL_SOURCE}
+      - LOCAL_SOURCE=false
+      - NODE_ENV=prod
