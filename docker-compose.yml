@@ -1,0 +1,13 @@
+version: "2.4"
+services:
+  ertesito:
+    build: .
+    volumes:
+      - /mnt/data/supervisor/share/ertesito/data/:/data/
+      - /mnt/data/supervisor/share/ertesito/credentials/:/credentials/
+    environment:
+      - MEDITIME_USERNAME=${MEDITIME_USERNAME}
+      - MEDITIME_PASSWORD=${MEDITIME_PASSWORD}
+      - SENDER_EMAIL=${SENDER_EMAIL}
+      - SENDER_PW=${SENDER_PW}
+      - LOCAL_SOURCE=${LOCAL_SOURCE}
