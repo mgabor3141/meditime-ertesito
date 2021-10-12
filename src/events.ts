@@ -123,7 +123,13 @@ export const entryToEvent = (
   const {Id, Type, Text, WardId} = entry
 
   if (
-    !(WardId === 121 || WardId === 122 || WardId === 123 || WardId === 156) &&
+    !(
+      WardId === 121 ||
+      WardId === 122 ||
+      WardId === 123 ||
+      WardId === 156 ||
+      WardId === 135
+    ) &&
     (Type === 'M1' || Type === 'M2')
   )
     return null
