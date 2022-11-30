@@ -8,7 +8,7 @@ export type User = {
 export type Users = Record<string, User>
 
 export const users: Users = JSON.parse(
-  fs.readFileSync('data/users.json').toString(),
+  fs.readFileSync(`${process.env.DATA_PATH}/users.json`).toString(),
 )
 
 export const isUser = (id: string) => Object.keys(users).includes(id)

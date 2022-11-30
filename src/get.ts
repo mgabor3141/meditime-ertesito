@@ -29,8 +29,8 @@ export const getData = async (): Promise<Data> => {
   if (process.env.LOCAL_SOURCE === 'true') {
     console.log('Retrieving shifts from file instead of Meditime')
     return {
-      entries: JSON.parse((await fs.readFile('data/entries.json')).toString()),
-      wardIds: JSON.parse((await fs.readFile('data/ward_ids.json')).toString()),
+      entries: JSON.parse((await fs.readFile(`${process.env.DATA_PATH}/entries.json`)).toString()),
+      wardIds: JSON.parse((await fs.readFile(`${process.env.DATA_PATH}/ward_ids.json`)).toString()),
     }
   }
 
@@ -172,7 +172,8 @@ export const getData = async (): Promise<Data> => {
   console.log(` Done! ${entries.length} entries total`)
   entries = _.uniqBy(entries, ({Id}) => Id)
   console.log(`${entries.length} entries after filtering`)
-  await fs.writeFile('data/entries.json', JSON.stringify(entries))
+  if (process.env.WRITE_ENTRIES === 'true')
+    await fs.writeFile(`${process.env.DATA_PATH}/entries.json`, JSON.stringify(entries))
 
   return {entries, wardIds}
 }

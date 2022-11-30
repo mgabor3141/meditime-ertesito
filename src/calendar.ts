@@ -12,7 +12,7 @@ import _ from 'lodash'
 import {scriptStartDate} from './dates'
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: 'credentials/calendar-service-account.json',
+  keyFile: `${process.env.DATA_PATH}/calendar-service-account.json`,
   scopes: ['https://www.googleapis.com/auth/calendar'],
 })
 

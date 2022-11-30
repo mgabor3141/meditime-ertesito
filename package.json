@@ -32,7 +32,7 @@
     "typescript": "^4.3.2"
   },
   "name": "meditime-ertesito",
-  "version": "3.3",
+  "version": "3.3.1",
   "author": "mgabor",
   "private": true
 }
