@@ -17,6 +17,7 @@
     "googleapis": "^74.2.0",
     "lodash": "^4.17.21",
     "object-hash": "^2.2.0",
+    "puppeteer": "^19.5.2",
     "tough-cookie": "^4.0.0",
     "ts-node": "^10.9.1",
     "weeknumber": "^1.2.1"
