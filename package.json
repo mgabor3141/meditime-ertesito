@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "dev": "yarn build && yarn start",
+    "dev": "node --icu-data-dir=node_modules/full-icu -r dotenv/config -r ts-node/register src/index.ts",
     "build": "tsc",
     "update": "git pull && yarn && yarn build",
-    "start": "node --icu-data-dir=node_modules/full-icu --require dotenv/config dist/index.js",
+    "start": "node --icu-data-dir=node_modules/full-icu -r dotenv/config dist/index.js",
     "start:dry": "yarn cross-env NODE_ENV=development yarn start"
   },
   "dependencies": {
@@ -18,6 +18,7 @@
     "lodash": "^4.17.21",
     "object-hash": "^2.2.0",
     "tough-cookie": "^4.0.0",
+    "ts-node": "^10.9.1",
     "weeknumber": "^1.2.1"
   },
   "devDependencies": {
