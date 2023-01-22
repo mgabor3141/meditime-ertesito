@@ -121,6 +121,16 @@ export const entryToEvent = (
   wardIds: WardIds,
 ): CalendarEvent | null => {
   const {Id, Type, Text, WardId} = entry
+  const wardName = WardId
+    ? _.get(wardIds, WardId, (id: number) => {
+        console.log(
+          `No ward name found for ID: ${id}\nEvent details: ${JSON.stringify(
+            entry,
+          )}`,
+        )
+        return `ID${WardId}`
+      })
+    : '???'
 
   if (
     !(
@@ -137,15 +147,13 @@ export const entryToEvent = (
   let summary: string = Type
 
   if (WardId && (Type === 'M1' || Type === 'M2' || Type === 'HM'))
-    summary = `[${Type}] ${wardIds[WardId]}`
+    summary = `[${Type}] ${wardName}`
 
   const event = {
     ...getTiming(entry),
     id: '',
     summary,
-    description: `${Text}\nOsztály: ${
-      WardId ? wardIds[WardId] : ''
-    }\nEsemény azonosító: ${Id}`,
+    description: `${Text}\nOsztály: ${wardName}\nEsemény azonosító: ${Id}`,
   }
 
   event.id = hash(event, {excludeKeys: (key) => key === 'id'})

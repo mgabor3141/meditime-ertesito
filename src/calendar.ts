@@ -1,5 +1,5 @@
 import {Data} from './get'
-import {google} from 'googleapis'
+import {calendar_v3, google} from 'googleapis'
 import {users} from './users'
 import {
   CalendarEvent,
@@ -28,7 +28,7 @@ const addEvent = async (calendarId: string, event: CalendarEvent) => {
   await retry(async () => {
     try {
       await calendar.events.insert({calendarId, requestBody: event})
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 409)
         calendar.events.update({
           calendarId,
@@ -43,11 +43,11 @@ const addEvent = async (calendarId: string, event: CalendarEvent) => {
     await retry(async (bail) => {
       try {
         return await calendar.events.insert({calendarId, requestBody: event})
-      } catch (e) {
+      } catch (e: any) {
         if (e.code !== 403) bail(e)
       }
     })
-  } catch (e) {
+  } catch (e: any) {
     if (e.code !== 409) throw e
 
     // Id already exists
@@ -58,7 +58,7 @@ const addEvent = async (calendarId: string, event: CalendarEvent) => {
           eventId: event.id,
           requestBody: event,
         })
-      } catch (e) {
+      } catch (e: any) {
         if (e.code !== 403) bail(e)
       }
     })
@@ -71,7 +71,7 @@ const removeEvent = async (calendarId: string, eventId: string) => {
   await retry(async (bail) => {
     try {
       return await calendar.events.delete({calendarId, eventId})
-    } catch (e) {
+    } catch (e: any) {
       if (e.code !== 403) bail(e)
     }
   })

@@ -1,9 +1,8 @@
-import cheerio from 'cheerio'
+import {Page} from 'puppeteer'
 import {LabelTypes} from './events'
-import {WardIds} from './get'
 
 export type Entry = {
-  Id: number
+  Id?: number // Id now optional, as we can't guarantee to find it
   UserId: number
   Date: string
   Type: LabelTypes
@@ -11,49 +10,30 @@ export type Entry = {
   WardId?: number
 }
 
-export const parse = (html: string): Entry[] => {
-  const $ = cheerio.load(html)
+export const parseMonth = async (page: Page): Promise<Entry[]> =>
+  await page.$$eval('td:not(.noschedule)', async (cells) =>
+    (
+      await Promise.all(
+        cells.map(async (cell) => {
+          // See reference folder to see what cells look like
+          const idString = cell.querySelector('div.moreScheduleTd')?.id
+          if (!idString) throw `No idString found in event:\n${cell.innerHTML}`
+          const [Date, Id, UserId, WardId] = idString?.split('_')
 
-  return $('table#monthlyViewedGroupedTable')
-    .find('span.allowdragdrop')
-    .toArray()
-    .map((element) => {
-      const entryData = JSON.parse(element.attribs.dragproperties)
-      entryData.Type = $(element).parent().children('span.scheduleType').text()
+          return Array.from(cell.querySelectorAll('div.dropzone span').values())
+            .map((span) => span.textContent)
+            .map((Type) => {
+              if (!Type)
+                throw `No labeltype (M1, TAN, etc) found in cell:\n${cell.innerHTML}`
 
-      return entryData
-    })
-}
-
-export const parseNight = (html: string): Entry[] => {
-  const $ = cheerio.load(html)
-
-  return $('table')
-    .find('span.allowdragdrop')
-    .toArray()
-    .map((element) => JSON.parse(element.attribs.dragproperties))
-    .filter(({Text}) => Text === 'ÜGY')
-    .map(({Id, UserId, Date, Text}) => ({
-      Id,
-      UserId,
-      Date,
-      Type: Text,
-    }))
-}
-
-export const parseWardIds = (html: string): WardIds => {
-  const $ = cheerio.load(html)
-
-  return Object.fromEntries(
-    $('select#ddWardIds')
-      .find('option')
-      .toArray()
-      .map((node) => {
-        const entry = $(node)
-        return [
-          entry.attr('value'),
-          `${entry.parent().attr('label')} ${entry.text()}`.trim(),
-        ]
-      }),
+              return {
+                Type: Type.trim() as LabelTypes,
+                Date,
+                UserId: parseInt(UserId),
+                WardId: parseInt(WardId),
+              }
+            })
+        }),
+      )
+    ).flat(),
   )
-}
