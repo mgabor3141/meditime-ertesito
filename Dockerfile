@@ -15,13 +15,9 @@ RUN apk update && apk add --no-cache nmap && \
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
-COPY package.json yarn.lock ./
-RUN yarn install
-
-COPY scheduler-crontab.txt ./
-RUN crontab /scheduler-crontab.txt
-
 COPY . .
+RUN yarn install
 RUN yarn build
+RUN crontab scheduler-crontab.txt
 
 ENTRYPOINT ["crond", "-f"]
