@@ -120,7 +120,7 @@ export const entryToEvent = (
   entry: Entry,
   wardIds: WardIds,
 ): CalendarEvent | null => {
-  const {Id, Type, Text, WardId} = entry
+  const {Type, Text, WardId} = entry
   const wardName = WardId
     ? _.get(wardIds, WardId, (id: number) => {
         console.log(
@@ -153,7 +153,7 @@ export const entryToEvent = (
     ...getTiming(entry),
     id: '',
     summary,
-    description: `${Text}\nOsztály: ${wardName}\nEsemény azonosító: ${Id}`,
+    description: `${Text}\nOsztály: ${wardName}`,
   }
 
   event.id = hash(event, {excludeKeys: (key) => key === 'id'})

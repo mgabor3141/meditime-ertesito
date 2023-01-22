@@ -2,7 +2,6 @@ import {Page} from 'puppeteer'
 import {LabelTypes} from './events'
 
 export type Entry = {
-  Id?: number // Id now optional, as we can't guarantee to find it
   UserId: number
   Date: string
   Type: LabelTypes
@@ -18,7 +17,7 @@ export const parseMonth = async (page: Page): Promise<Entry[]> =>
           // See reference folder to see what cells look like
           const idString = cell.querySelector('div.moreScheduleTd')?.id
           if (!idString) throw `No idString found in event:\n${cell.innerHTML}`
-          const [Date, Id, UserId, WardId] = idString?.split('_')
+          const [Date, _Id, UserId, WardId] = idString?.split('_')
 
           return Array.from(cell.querySelectorAll('div.dropzone span').values())
             .map((span) => span.textContent)
