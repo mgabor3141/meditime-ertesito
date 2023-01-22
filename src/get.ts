@@ -1,9 +1,6 @@
-import axiosCookieJarSupport from 'axios-cookiejar-support'
-import axios from 'axios'
-import tough from 'tough-cookie'
+import puppeteer, {ElementHandle, Page} from 'puppeteer'
 import {Entry, parse, parseNight, parseWardIds} from './parse'
 import {promises as fs} from 'fs'
-import _ from 'lodash'
 import {scriptStartDate} from './dates'
 
 export type WardIds = Record<string, string>
@@ -15,6 +12,22 @@ export type Data = {
 
 const zeroPad = (num: number, places: number = 2) =>
   String(num).padStart(places, '0')
+
+const xPath = async (
+  page: Page,
+  path: string,
+): Promise<ElementHandle<Element>> => {
+  await page.waitForXPath(path)
+
+  const res = await page.$x(path)
+
+  if (res.length === 0) throw `Not found: ${path}`
+
+  return res[0] as ElementHandle<Element>
+}
+
+const clickXPath = async (page: Page, path: string) =>
+  await (await xPath(page, path)).click()
 
 const getDateForMonth = (month: number) => {
   const date = new Date(scriptStartDate)
@@ -29,151 +42,190 @@ export const getData = async (): Promise<Data> => {
   if (process.env.LOCAL_SOURCE === 'true') {
     console.log('Retrieving shifts from file instead of Meditime')
     return {
-      entries: JSON.parse((await fs.readFile(`${process.env.DATA_PATH}/entries.json`)).toString()),
-      wardIds: JSON.parse((await fs.readFile(`${process.env.DATA_PATH}/ward_ids.json`)).toString()),
+      entries: JSON.parse(
+        (await fs.readFile(`${process.env.DATA_PATH}/entries.json`)).toString(),
+      ),
+      wardIds: JSON.parse(
+        (
+          await fs.readFile(`${process.env.DATA_PATH}/ward_ids.json`)
+        ).toString(),
+      ),
     }
   }
 
-  axiosCookieJarSupport(axios)
+  if (!process.env.MEDITIME_USERNAME || !process.env.MEDITIME_PASSWORD)
+    throw 'No username/password found in env'
 
-  const cookieJar = new tough.CookieJar()
+  console.log('Opening Meditime')
 
-  const meditime = axios.create({
-    baseURL: 'https://meditime.today/',
-    withCredentials: true,
-    jar: cookieJar,
+  // Prepare page
+  const browser = await puppeteer.launch({
+    defaultViewport: {width: 1280, height: 1600},
+    // headless: false,
   })
+  const page = await browser.newPage()
 
-  await meditime.post('Login/LoggedIn', null, {
-    params: {
-      username: process.env.MEDITIME_USERNAME,
-      password: process.env.MEDITIME_PASSWORD,
-      rememberMe: false,
-    },
-  })
+  try {
+    await page.goto('https://meditime.today/wardSchedule')
+    // @ts-expect-error "Type excessively deep" false positive
+    await page.waitForSelector('div.login input[type="text"]')
 
-  process.stdout.write('Retrieving shifts')
+    // Log in
+    console.log('Logging in')
+    await page.type(
+      'div.login input[type="text"]',
+      process.env.MEDITIME_USERNAME,
+    )
+    await page.type(
+      'div.login input[type="password"]',
+      process.env.MEDITIME_PASSWORD,
+    )
+    await page.click('div.login input[type="checkbox"]')
+    await page.click('div.login button.rz-button.btn-primary')
+    // @ts-expect-error "Type excessively deep" false positive
+    await page.waitForSelector('table#scheduleSimpleView')
 
-  // Go to page
-  await meditime.post(
-    'WardSchedule/MonthlyInitGrouped?doctor=True',
-    'X-Requested-With=XMLHttpRequest',
-    {
-      headers: {
-        referer: 'https://meditime.today/Main/Default',
-      },
-    },
-  )
-
-  // Go back a month
-  const {data: firstMonthHtml} = await meditime.post(
-    'WardSchedule/MoveCalendar',
-    null,
-    {
-      params: {
-        date: getDateForMonth(0),
-        way: -1,
-        isMonthly: true,
-        isGrouped: true,
-        isDoctor: true,
-      },
-      headers: {
-        referer: 'https://meditime.today/Main/Default',
-      },
-    },
-  )
-
-  let entries = parse(firstMonthHtml)
-  const wardIds = parseWardIds(firstMonthHtml)
-
-  for (let month = -1; true; ++month) {
-    process.stdout.write('.')
-
-    const {data: nextMonthHtml} = await meditime.post(
-      'WardSchedule/MoveCalendar',
-      null,
-      {
-        params: {
-          date: getDateForMonth(month),
-          way: 1,
-          isMonthly: true,
-          isGrouped: true,
-          isDoctor: true,
-        },
-        headers: {
-          referer: 'https://meditime.today/Main/Default',
-        },
-      },
+    // Prepare filters
+    await clickXPath(
+      page,
+      "//div[contains(@class, 'rz-selectbutton')]/div/span[contains(text(), 'Orvos')]",
+    )
+    await clickXPath(
+      page,
+      "//div[contains(@class, 'rz-selectbutton')]/div/span[contains(text(), 'Havi')]",
     )
 
-    const newEntries = parse(nextMonthHtml)
+    process.stdout.write('Retrieving shifts')
+    // @ts-expect-error "Type excessively deep" false positive
+    await page.waitForSelector('tbody')
+    await clickXPath(page, '//button[@title="Egy hónapot vissza"]')
 
-    if (!newEntries.length) break
+    await page.screenshot({path: 'screenshots/state.jpg'})
+    // @ts-expect-error "Type excessively deep" false positive
+    await page.waitForSelector('button.buttonicons.loading')
+    await page.waitForSelector('tbody')
 
-    entries = [...entries, ...newEntries]
+    await page.screenshot({path: 'screenshots/state2.jpg'})
+
+    // // Go back a month
+    // const {data: firstMonthHtml} = await meditime.post(
+    //   'WardSchedule/MoveCalendar',
+    //   null,
+    //   {
+    //     params: {
+    //       date: getDateForMonth(0),
+    //       way: -1,
+    //       isMonthly: true,
+    //       isGrouped: true,
+    //       isDoctor: true,
+    //     },
+    //     headers: {
+    //       referer: 'https://meditime.today/Main/Default',
+    //     },
+    //   },
+    // )
+    //
+    // let entries = parse(firstMonthHtml)
+    // const wardIds = parseWardIds(firstMonthHtml)
+    //
+    // for (let month = -1; true; ++month) {
+    //   process.stdout.write('.')
+    //
+    //   const {data: nextMonthHtml} = await meditime.post(
+    //     'WardSchedule/MoveCalendar',
+    //     null,
+    //     {
+    //       params: {
+    //         date: getDateForMonth(month),
+    //         way: 1,
+    //         isMonthly: true,
+    //         isGrouped: true,
+    //         isDoctor: true,
+    //       },
+    //       headers: {
+    //         referer: 'https://meditime.today/Main/Default',
+    //       },
+    //     },
+    //   )
+    //
+    //   const newEntries = parse(nextMonthHtml)
+    //
+    //   if (!newEntries.length) break
+    //
+    //   entries = [...entries, ...newEntries]
+    // }
+    //
+    // process.stdout.write(
+    //   ` Done! ${entries.length} entries so far\nRetrieving night shifts`,
+    // )
+    //
+    // // Night shift schedule
+    // await meditime.post(
+    //   'GlobalSchedule/Init?isMonthly=True',
+    //   'X-Requested-With=XMLHttpRequest',
+    //   {
+    //     headers: {
+    //       referer: 'https://meditime.today/Main/Default',
+    //     },
+    //   },
+    // )
+    //
+    // const {data: firstMonthNightShiftHtml} = await meditime.post(
+    //   'GlobalSchedule/MoveCalendar',
+    //   null,
+    //   {
+    //     params: {
+    //       date: getDateForMonth(0),
+    //       way: -1,
+    //       isMonthly: true,
+    //     },
+    //     headers: {
+    //       referer: 'https://meditime.today/Main/Default',
+    //     },
+    //   },
+    // )
+    //
+    // entries = [...entries, ...parseNight(firstMonthNightShiftHtml)]
+    //
+    // for (let month = -1; true; ++month) {
+    //   process.stdout.write('.')
+    //   const {data: nextMonthHtml} = await meditime.post(
+    //     'GlobalSchedule/MoveCalendar',
+    //     null,
+    //     {
+    //       params: {
+    //         date: getDateForMonth(month),
+    //         way: 1,
+    //         isMonthly: true,
+    //       },
+    //       headers: {
+    //         referer: 'https://meditime.today/Main/Default',
+    //       },
+    //     },
+    //   )
+    //
+    //   const newEntries = parseNight(nextMonthHtml)
+    //
+    //   if (!newEntries.length) break
+    //
+    //   entries = [...entries, ...newEntries]
+    // }
+    //
+    //   entries = [...entries, ...newEntries]
+    // }
+    //
+    // console.log(` Done! ${entries.length} entries total`)
+    // entries = _.uniqBy(entries, ({Id}) => Id)
+    // console.log(`${entries.length} entries after filtering`)
+    // if (process.env.WRITE_ENTRIES === 'true')
+    //   await fs.writeFile(`${process.env.DATA_PATH}/entries.json`, JSON.stringify(entries))
+    //
+    // return {entries, wardIds}
+
+    console.log('Got here')
+    return {entries: [], wardIds: {}}
+  } catch (e) {
+    await page.screenshot({path: 'screenshots/error.jpg'})
+    throw e
   }
-
-  process.stdout.write(
-    ` Done! ${entries.length} entries so far\nRetrieving night shifts`,
-  )
-
-  // Night shift schedule
-  await meditime.post(
-    'GlobalSchedule/Init?isMonthly=True',
-    'X-Requested-With=XMLHttpRequest',
-    {
-      headers: {
-        referer: 'https://meditime.today/Main/Default',
-      },
-    },
-  )
-
-  const {data: firstMonthNightShiftHtml} = await meditime.post(
-    'GlobalSchedule/MoveCalendar',
-    null,
-    {
-      params: {
-        date: getDateForMonth(0),
-        way: -1,
-        isMonthly: true,
-      },
-      headers: {
-        referer: 'https://meditime.today/Main/Default',
-      },
-    },
-  )
-
-  entries = [...entries, ...parseNight(firstMonthNightShiftHtml)]
-
-  for (let month = -1; true; ++month) {
-    process.stdout.write('.')
-    const {data: nextMonthHtml} = await meditime.post(
-      'GlobalSchedule/MoveCalendar',
-      null,
-      {
-        params: {
-          date: getDateForMonth(month),
-          way: 1,
-          isMonthly: true,
-        },
-        headers: {
-          referer: 'https://meditime.today/Main/Default',
-        },
-      },
-    )
-
-    const newEntries = parseNight(nextMonthHtml)
-
-    if (!newEntries.length) break
-
-    entries = [...entries, ...newEntries]
-  }
-
-  console.log(` Done! ${entries.length} entries total`)
-  entries = _.uniqBy(entries, ({Id}) => Id)
-  console.log(`${entries.length} entries after filtering`)
-  if (process.env.WRITE_ENTRIES === 'true')
-    await fs.writeFile(`${process.env.DATA_PATH}/entries.json`, JSON.stringify(entries))
-
-  return {entries, wardIds}
 }
