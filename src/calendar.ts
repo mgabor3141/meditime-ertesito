@@ -18,6 +18,12 @@ const auth = new google.auth.GoogleAuth({
 
 const calendar = google.calendar({version: 'v3', auth})
 
+const errorCode = (error: unknown, code: number) =>
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  error.code === code
+
 const addEvent = async (calendarId: string, event: CalendarEvent) => {
   console.log(
     `Adding ${event.summary} (${
@@ -28,8 +34,8 @@ const addEvent = async (calendarId: string, event: CalendarEvent) => {
   await retry(async () => {
     try {
       await calendar.events.insert({calendarId, requestBody: event})
-    } catch (error: any) {
-      if (error.code === 409)
+    } catch (error) {
+      if (errorCode(error, 409))
         calendar.events.update({
           calendarId,
           eventId: event.id,
@@ -43,12 +49,12 @@ const addEvent = async (calendarId: string, event: CalendarEvent) => {
     await retry(async (bail) => {
       try {
         return await calendar.events.insert({calendarId, requestBody: event})
-      } catch (e: any) {
-        if (e.code !== 403) bail(e)
+      } catch (error) {
+        if (!errorCode(error, 403)) bail(error as Error)
       }
     })
-  } catch (e: any) {
-    if (e.code !== 409) throw e
+  } catch (error) {
+    if (!errorCode(error, 409)) throw error
 
     // Id already exists
     await retry(async (bail) => {
@@ -58,8 +64,8 @@ const addEvent = async (calendarId: string, event: CalendarEvent) => {
           eventId: event.id,
           requestBody: event,
         })
-      } catch (e: any) {
-        if (e.code !== 403) bail(e)
+      } catch (error) {
+        if (!errorCode(error, 403)) bail(error as Error)
       }
     })
   }
@@ -71,8 +77,8 @@ const removeEvent = async (calendarId: string, eventId: string) => {
   await retry(async (bail) => {
     try {
       return await calendar.events.delete({calendarId, eventId})
-    } catch (e: any) {
-      if (e.code !== 403) bail(e)
+    } catch (error) {
+      if (!errorCode(error, 403)) bail(error as Error)
     }
   })
 }
@@ -179,7 +185,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
 
     // Remove entries that are no longer valid
     if (inCalendarEvents)
-      for (const event of inCalendarEvents?.filter(
+      for (const event of inCalendarEvents.filter(
         ({id}) => id && !localIds.has(id),
       )) {
         event.id && (await removeEvent(calendarId, event.id))

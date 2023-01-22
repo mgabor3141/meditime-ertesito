@@ -16,7 +16,7 @@ export const parseMonth = async (page: Page): Promise<Entry[]> =>
           // See reference folder to see what cells look like
           const idString = cell.querySelector('div.moreScheduleTd')?.id
           if (!idString) throw `No idString found in event:\n${cell.innerHTML}`
-          const [Date, _Id, UserId, WardId] = idString?.split('_')
+          const [Date, _Id, UserId, WardId] = idString.split('_')
 
           return Array.from(cell.querySelectorAll('div.dropzone span').values())
             .map((span) => span.textContent)
