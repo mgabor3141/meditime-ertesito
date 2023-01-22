@@ -67,7 +67,6 @@ export const getData = async (): Promise<Data> => {
 
   try {
     await page.goto('https://meditime.today/wardSchedule')
-    // @ts-expect-error "Type excessively deep" false positive
     await page.waitForSelector('div.login input[type="text"]')
 
     // Log in
@@ -82,7 +81,6 @@ export const getData = async (): Promise<Data> => {
     )
     await page.click('div.login input[type="checkbox"]')
     await page.click('div.login button.rz-button.btn-primary')
-    // @ts-expect-error "Type excessively deep" false positive
     await page.waitForSelector('table#scheduleSimpleView')
 
     // Prepare filters
@@ -96,12 +94,10 @@ export const getData = async (): Promise<Data> => {
     )
 
     process.stdout.write('Retrieving shifts')
-    // @ts-expect-error "Type excessively deep" false positive
     await page.waitForSelector('tbody')
     await clickXPath(page, '//button[@title="Egy hónapot vissza"]')
 
     await page.screenshot({path: 'screenshots/state.jpg'})
-    // @ts-expect-error "Type excessively deep" false positive
     await page.waitForSelector('button.buttonicons.loading')
     await page.waitForSelector('tbody')
 
