@@ -1,5 +1,5 @@
 import {Data} from './get'
-import {calendar_v3, google} from 'googleapis'
+import {google} from 'googleapis'
 import {users} from './users'
 import {
   CalendarEvent,

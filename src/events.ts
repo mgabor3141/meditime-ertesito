@@ -29,8 +29,8 @@ export const calendarTimeToDate = (calendarTime: CalendarTime) =>
     : new Date(`${calendarTime.date}T00:00`)
 
 const allDay = ({Date: date}: Entry): CalendarTiming => {
-  const day = new Date(`${date}Z`)
-  const nextDay = new Date(`${date}Z`)
+  const day = formatDate(date)
+  const nextDay = formatDate(date)
   nextDay.setDate(day.getDate() + 1)
 
   return {
@@ -48,13 +48,29 @@ const allDay = ({Date: date}: Entry): CalendarTiming => {
   }
 }
 
-const dateFormat = (
-  date: string | Date,
+const formatDate = (date: string | Date): Date => {
+  let formattedDate: string | Date = date
+
+  if (typeof date === 'string' && date.match(/^\d{8}$/))
+    formattedDate = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(
+      6,
+      8,
+    )}`
+
+  if (typeof formattedDate === 'string' && formattedDate.includes('-'))
+    formattedDate = new Date(`${formattedDate}Z`)
+
+  if (!(formattedDate instanceof Date))
+    throw `Not sure how to format this "date": ${date}`
+
+  return formattedDate
+}
+
+const dateToCalendarTime = (
+  date: Date,
   time: string,
   dayOffset?: number,
 ): CalendarTime => {
-  if (typeof date === 'string') date = new Date(`${date}Z`)
-
   if (dayOffset) date.setDate(date.getDate() + dayOffset)
 
   return {
@@ -63,9 +79,7 @@ const dateFormat = (
   }
 }
 
-const muszak = (Type: LabelTypes, date: string): CalendarTiming => {
-  const day = new Date(`${date}Z`)
-
+const muszak = (Type: LabelTypes, day: Date): CalendarTiming => {
   let delelott =
     day.getDay() === 5 ? !(weekNumber(day) % 2) : !(day.getDay() % 2)
 
@@ -73,12 +87,12 @@ const muszak = (Type: LabelTypes, date: string): CalendarTiming => {
 
   return delelott
     ? {
-        start: dateFormat(day, '07:30:00'),
-        end: dateFormat(day, '13:30:00'),
+        start: dateToCalendarTime(day, '07:30:00'),
+        end: dateToCalendarTime(day, '13:30:00'),
       }
     : {
-        start: dateFormat(day, '13:30:00'),
-        end: dateFormat(day, '19:30:00'),
+        start: dateToCalendarTime(day, '13:30:00'),
+        end: dateToCalendarTime(day, '19:30:00'),
       }
 }
 
@@ -97,18 +111,19 @@ export type LabelTypes =
 
 const getTiming = (entry: Entry): CalendarTiming => {
   const {Type, Date: date} = entry
+  const formattedDate = formatDate(date)
 
   return _.get(
     {
-      M1: muszak(Type, date),
-      M2: muszak(Type, date),
+      M1: muszak(Type, formattedDate),
+      M2: muszak(Type, formattedDate),
       HM: {
-        start: dateFormat(date, '07:30:00'),
-        end: dateFormat(date, '19:30:00'),
+        start: dateToCalendarTime(formattedDate, '07:30:00'),
+        end: dateToCalendarTime(formattedDate, '19:30:00'),
       },
       ÜGY: {
-        start: dateFormat(date, '19:30:00'),
-        end: dateFormat(date, '07:30:00', 1),
+        start: dateToCalendarTime(formattedDate, '19:30:00'),
+        end: dateToCalendarTime(formattedDate, '07:30:00', 1),
       },
     },
     Type,
@@ -120,7 +135,7 @@ export const entryToEvent = (
   entry: Entry,
   wardIds: WardIds,
 ): CalendarEvent | null => {
-  const {Type, Text, WardId} = entry
+  const {Type, WardId} = entry
   const wardName = WardId
     ? _.get(wardIds, WardId, (id: number) => {
         console.log(
@@ -153,7 +168,7 @@ export const entryToEvent = (
     ...getTiming(entry),
     id: '',
     summary,
-    description: `${Text}\nOsztály: ${wardName}`,
+    description: `Osztály: ${wardName}`,
   }
 
   event.id = hash(event, {excludeKeys: (key) => key === 'id'})

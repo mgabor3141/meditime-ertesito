@@ -5,7 +5,6 @@ export type Entry = {
   UserId: number
   Date: string
   Type: LabelTypes
-  Text?: string
   WardId?: number
 }
 
