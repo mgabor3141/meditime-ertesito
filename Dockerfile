@@ -1,22 +1,24 @@
+# Dockerfile from https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md
 FROM node:lts-alpine
 
-WORKDIR /app
-
-RUN apk update && apk add --no-cache nmap && \
-    echo @edge http://nl.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories && \
-    echo @edge http://nl.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories && \
-    apk update && \
-    apk add --no-cache \
+RUN apk add --no-cache \
       chromium \
+      nss \
+      freetype \
       harfbuzz \
-      "freetype>2.8" \
-      ttf-freefont \
-      nss
+      ca-certificates \
+      ttf-freefont
 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-COPY . .
-RUN yarn install
+WORKDIR /root
+
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+RUN yarn install --immutable
+
+COPY . ./
 RUN yarn build
 RUN crontab scheduler-crontab.txt
 
