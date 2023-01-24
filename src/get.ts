@@ -149,6 +149,8 @@ export const getData = async (): Promise<Entry[]> => {
   } catch (e) {
     // await page.screenshot({path: 'screenshots/error.jpg'})
     throw e
+  } finally {
+    await browser.close()
   }
 }
 
