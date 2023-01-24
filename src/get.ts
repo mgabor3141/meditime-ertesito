@@ -147,7 +147,7 @@ export const getData = async (): Promise<Entry[]> => {
 
     return filteredEntries
   } catch (e) {
-    await page.screenshot({path: 'screenshots/error.jpg'})
+    // await page.screenshot({path: 'screenshots/error.jpg'})
     throw e
   }
 }
