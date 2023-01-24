@@ -68,19 +68,17 @@ export const sendEmails = async (
       ),
     }
 
-    email
-      .send({
-        template: 'update',
-        message: {
-          to: users[userId].email,
-        },
-        locals: {
-          name: users[userId].name,
-          calendarId: calendarIds[userId],
-          diff: processedDiff,
-        },
-      })
-      .then(console.log)
-      .catch(console.error)
+    await email.send({
+      template: 'update',
+      message: {
+        to: users[userId].email,
+      },
+      locals: {
+        name: users[userId].name,
+        calendarId: calendarIds[userId],
+        diff: processedDiff,
+      },
+    })
+    console.log(`Email sent to ${users[userId].name}`)
   }
 }

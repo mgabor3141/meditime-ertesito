@@ -1,12 +1,25 @@
-FROM node:16-alpine
+# Dockerfile from https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md
+FROM node:lts-alpine
 
-COPY package.json yarn.lock ./
-RUN yarn install
+RUN apk add --no-cache \
+      chromium \
+      nss \
+      freetype \
+      harfbuzz \
+      ca-certificates \
+      ttf-freefont
 
-COPY scheduler-crontab.txt ./
-RUN crontab /scheduler-crontab.txt
+# Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-COPY . .
+WORKDIR /root
+
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+RUN yarn install --immutable
+
+COPY . ./
 RUN yarn build
+RUN crontab scheduler-crontab.txt
 
 ENTRYPOINT ["crond", "-f"]

@@ -1,10 +1,7 @@
-import axiosCookieJarSupport from 'axios-cookiejar-support'
-import axios from 'axios'
-import tough from 'tough-cookie'
-import {Entry, parse, parseNight, parseWardIds} from './parse'
-import {promises as fs} from 'fs'
 import _ from 'lodash'
-import {scriptStartDate} from './dates'
+import puppeteer, {ElementHandle, Page} from 'puppeteer'
+import {Entry, parseMonth} from './parse'
+import {promises as fs} from 'fs'
 
 export type WardIds = Record<string, string>
 
@@ -13,167 +10,170 @@ export type Data = {
   wardIds: WardIds
 }
 
-const zeroPad = (num: number, places: number = 2) =>
-  String(num).padStart(places, '0')
+const xPath = async (
+  page: Page,
+  path: string,
+): Promise<ElementHandle<Element>> => {
+  await page.waitForXPath(path)
 
-const getDateForMonth = (month: number) => {
-  const date = new Date(scriptStartDate)
-  date.setDate(1)
-  date.setMonth(date.getMonth() + month)
-  return `${date.getFullYear()}.${zeroPad(date.getMonth() + 1)}.${zeroPad(
-    date.getDate(),
-  )}`
+  const res = await page.$x(path)
+
+  if (res.length === 0) throw `Not found: ${path}`
+
+  return res[0] as ElementHandle<Element>
 }
 
-export const getData = async (): Promise<Data> => {
+const clickXPath = async (page: Page, path: string) =>
+  await (await xPath(page, path)).click()
+
+export const getData = async (): Promise<Entry[]> => {
   if (process.env.LOCAL_SOURCE === 'true') {
     console.log('Retrieving shifts from file instead of Meditime')
-    return {
-      entries: JSON.parse((await fs.readFile(`${process.env.DATA_PATH}/entries.json`)).toString()),
-      wardIds: JSON.parse((await fs.readFile(`${process.env.DATA_PATH}/ward_ids.json`)).toString()),
+    return JSON.parse(
+      (await fs.readFile(`${process.env.DATA_PATH}/entries.json`)).toString(),
+    )
+  }
+
+  if (!process.env.MEDITIME_USERNAME || !process.env.MEDITIME_PASSWORD)
+    throw 'No username/password found in env'
+
+  console.log(`[${Math.floor(process.uptime())}s] Opening Meditime`)
+
+  // Prepare page
+  const browser = await puppeteer.launch({
+    defaultViewport: {width: 1080, height: 800},
+    args: ['--no-sandbox'],
+    // headless: false,
+  })
+  const page = await browser.newPage()
+
+  try {
+    await page.goto('https://meditime.today/wardSchedule')
+    await page.waitForSelector('div.login input[type="text"]')
+
+    // Log in
+    console.log(`[${Math.floor(process.uptime())}s] Logging in`)
+    await page.type(
+      'div.login input[type="text"]',
+      process.env.MEDITIME_USERNAME,
+    )
+    await page.type(
+      'div.login input[type="password"]',
+      process.env.MEDITIME_PASSWORD,
+    )
+    await page.click('div.login input[type="checkbox"]')
+    await page.click('div.login button.rz-button.btn-primary')
+    await page.waitForSelector('table#scheduleSimpleView')
+
+    // Prepare filters
+    await clickXPath(
+      page,
+      '//div[contains(@class, "rz-selectbutton")]/div/span[contains(text(), "Orvos")]',
+    )
+    await clickXPath(
+      page,
+      '//div[contains(@class, "rz-selectbutton")]/div/span[contains(text(), "Havi")]',
+    )
+
+    await clickXPath(page, '//button/div/i[contains(@class, "fa-history")]')
+    // Not strictly necessary to load everything here
+    await loadEverything(page)
+    await clickXPath(
+      page,
+      '//button/div/i[contains(@class, "fa-angle-double-left")]',
+    )
+
+    const entries = []
+    process.stdout.write(`[${Math.floor(process.uptime())}s] Retrieving shifts`)
+    for (;;) {
+      process.stdout.write('.')
+      await loadEverything(page)
+      const newEntries = await parseMonth(page)
+      if (newEntries.length === 0) break
+      entries.push(...newEntries)
+      await clickXPath(
+        page,
+        '//button/div/i[contains(@class, "fa-angle-double-right")]',
+      )
     }
-  }
 
-  axiosCookieJarSupport(axios)
-
-  const cookieJar = new tough.CookieJar()
-
-  const meditime = axios.create({
-    baseURL: 'https://meditime.today/',
-    withCredentials: true,
-    jar: cookieJar,
-  })
-
-  await meditime.post('Login/LoggedIn', null, {
-    params: {
-      username: process.env.MEDITIME_USERNAME,
-      password: process.env.MEDITIME_PASSWORD,
-      rememberMe: false,
-    },
-  })
-
-  process.stdout.write('Retrieving shifts')
-
-  // Go to page
-  await meditime.post(
-    'WardSchedule/MonthlyInitGrouped?doctor=True',
-    'X-Requested-With=XMLHttpRequest',
-    {
-      headers: {
-        referer: 'https://meditime.today/Main/Default',
-      },
-    },
-  )
-
-  // Go back a month
-  const {data: firstMonthHtml} = await meditime.post(
-    'WardSchedule/MoveCalendar',
-    null,
-    {
-      params: {
-        date: getDateForMonth(0),
-        way: -1,
-        isMonthly: true,
-        isGrouped: true,
-        isDoctor: true,
-      },
-      headers: {
-        referer: 'https://meditime.today/Main/Default',
-      },
-    },
-  )
-
-  let entries = parse(firstMonthHtml)
-  const wardIds = parseWardIds(firstMonthHtml)
-
-  for (let month = -1; true; ++month) {
-    process.stdout.write('.')
-
-    const {data: nextMonthHtml} = await meditime.post(
-      'WardSchedule/MoveCalendar',
-      null,
-      {
-        params: {
-          date: getDateForMonth(month),
-          way: 1,
-          isMonthly: true,
-          isGrouped: true,
-          isDoctor: true,
-        },
-        headers: {
-          referer: 'https://meditime.today/Main/Default',
-        },
-      },
+    process.stdout.write(
+      ` [${Math.floor(process.uptime())}s] Done! ${
+        entries.length
+      } entries so far\n[${Math.floor(
+        process.uptime(),
+      )}s] Retrieving night shifts`,
     )
 
-    const newEntries = parse(nextMonthHtml)
+    // Night shifts
+    await page.goto('https://meditime.today/dutySchedule')
 
-    if (!newEntries.length) break
-
-    entries = [...entries, ...newEntries]
-  }
-
-  process.stdout.write(
-    ` Done! ${entries.length} entries so far\nRetrieving night shifts`,
-  )
-
-  // Night shift schedule
-  await meditime.post(
-    'GlobalSchedule/Init?isMonthly=True',
-    'X-Requested-With=XMLHttpRequest',
-    {
-      headers: {
-        referer: 'https://meditime.today/Main/Default',
-      },
-    },
-  )
-
-  const {data: firstMonthNightShiftHtml} = await meditime.post(
-    'GlobalSchedule/MoveCalendar',
-    null,
-    {
-      params: {
-        date: getDateForMonth(0),
-        way: -1,
-        isMonthly: true,
-      },
-      headers: {
-        referer: 'https://meditime.today/Main/Default',
-      },
-    },
-  )
-
-  entries = [...entries, ...parseNight(firstMonthNightShiftHtml)]
-
-  for (let month = -1; true; ++month) {
-    process.stdout.write('.')
-    const {data: nextMonthHtml} = await meditime.post(
-      'GlobalSchedule/MoveCalendar',
-      null,
-      {
-        params: {
-          date: getDateForMonth(month),
-          way: 1,
-          isMonthly: true,
-        },
-        headers: {
-          referer: 'https://meditime.today/Main/Default',
-        },
-      },
+    await clickXPath(page, '//button/div/i[contains(@class, "fa-history")]')
+    // Not strictly necessary to load everything here
+    await loadEverything(page)
+    await clickXPath(
+      page,
+      '//button/div/i[contains(@class, "fa-angle-double-left")]',
     )
 
-    const newEntries = parseNight(nextMonthHtml)
+    for (;;) {
+      process.stdout.write('.')
+      await loadEverything(page)
+      const newEntries = await parseMonth(page)
+      if (newEntries.length === 0) break
+      entries.push(...newEntries)
+      await clickXPath(
+        page,
+        '//button/div/i[contains(@class, "fa-angle-double-right")]',
+      )
+    }
 
-    if (!newEntries.length) break
+    console.log(
+      ` [${Math.floor(process.uptime())}s] Done! ${
+        entries.length
+      } entries total`,
+    )
+    const filteredEntries = _.uniqWith(entries, _.isEqual)
+    console.log(
+      `[${Math.floor(process.uptime())}s] ${
+        filteredEntries.length
+      } entries after filtering`,
+    )
+    if (process.env.WRITE_ENTRIES === 'true')
+      await fs.writeFile(
+        `${process.env.DATA_PATH}/entries.json`,
+        JSON.stringify(entries),
+      )
 
-    entries = [...entries, ...newEntries]
+    return filteredEntries
+  } catch (e) {
+    // await page.screenshot({path: 'screenshots/error.jpg'})
+    throw e
   }
+}
 
-  console.log(` Done! ${entries.length} entries total`)
-  entries = _.uniqBy(entries, ({Id}) => Id)
-  console.log(`${entries.length} entries after filtering`)
-  if (process.env.WRITE_ENTRIES === 'true')
-    await fs.writeFile(`${process.env.DATA_PATH}/entries.json`, JSON.stringify(entries))
+const loadEverything = async (page: Page) => {
+  const spinnerPath = '//div[text()="Adatok betöltése folyamatban"]'
+  await page.waitForXPath(spinnerPath)
 
-  return {entries, wardIds}
+  for (;;) {
+    const spinnerResults = await page.$x(spinnerPath)
+
+    if (spinnerResults.length === 0) return
+
+    const spinner = spinnerResults[0] as ElementHandle<Element>
+
+    const numTBody = (await page.$x('tbody')).length
+    const watchDog = page.waitForXPath(`//tbody[${numTBody + 1}]`) // XPath indexes from 1
+
+    try {
+      // This is sometimes not found by the time we get here so we ust return
+      await spinner.click() // Scrolls into view
+    } catch {
+      // This may swallow unrelated exceptions...
+      return
+    }
+
+    await watchDog
+  }
 }

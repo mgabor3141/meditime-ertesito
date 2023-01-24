@@ -1,7 +1,7 @@
-name: "Meditime Ertesito"
-description: "A Home Assistant addon"
-version: "3.3.1"
-slug: "meditime_ertesito"
+name: 'Meditime Ertesito'
+description: 'A Home Assistant addon'
+version: '4.0.0'
+slug: 'meditime_ertesito'
 init: false
 arch:
   - aarch64

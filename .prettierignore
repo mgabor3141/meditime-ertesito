@@ -1,0 +1,6 @@
+dist/
+data/
+.eslintrc.js
+.yarn
+.pnp.*
+tsconfig.json
