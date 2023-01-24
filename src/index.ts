@@ -13,6 +13,8 @@ const main = async () => {
   const {diff, calendarIds} = await populateCalendars({entries, wardIds})
 
   await sendEmails(diff, calendarIds)
+
+  console.log('Done!')
 }
 
 main()
