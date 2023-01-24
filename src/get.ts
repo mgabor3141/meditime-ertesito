@@ -26,19 +26,12 @@ const xPath = async (
 const clickXPath = async (page: Page, path: string) =>
   await (await xPath(page, path)).click()
 
-export const getData = async (): Promise<Data> => {
+export const getData = async (): Promise<Entry[]> => {
   if (process.env.LOCAL_SOURCE === 'true') {
     console.log('Retrieving shifts from file instead of Meditime')
-    return {
-      entries: JSON.parse(
-        (await fs.readFile(`${process.env.DATA_PATH}/entries.json`)).toString(),
-      ),
-      wardIds: JSON.parse(
-        (
-          await fs.readFile(`${process.env.DATA_PATH}/ward_ids.json`)
-        ).toString(),
-      ),
-    }
+    return JSON.parse(
+      (await fs.readFile(`${process.env.DATA_PATH}/entries.json`)).toString(),
+    )
   }
 
   if (!process.env.MEDITIME_USERNAME || !process.env.MEDITIME_PASSWORD)
@@ -152,14 +145,7 @@ export const getData = async (): Promise<Data> => {
         JSON.stringify(entries),
       )
 
-    return {
-      entries: filteredEntries,
-      wardIds: JSON.parse(
-        (
-          await fs.readFile(`${process.env.DATA_PATH}/ward_ids.json`)
-        ).toString(),
-      ),
-    }
+    return filteredEntries
   } catch (e) {
     await page.screenshot({path: 'screenshots/error.jpg'})
     throw e

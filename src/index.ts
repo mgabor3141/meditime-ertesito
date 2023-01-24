@@ -1,11 +1,16 @@
+import {promises as fs} from 'fs'
 import {sendEmails} from './email'
 import {getData} from './get'
 import {populateCalendars} from './calendar'
 
 const main = async () => {
-  const data = await getData()
+  const entries = await getData()
 
-  const {diff, calendarIds} = await populateCalendars(data)
+  const wardIds = JSON.parse(
+    (await fs.readFile(`${process.env.DATA_PATH}/ward_ids.json`)).toString(),
+  )
+
+  const {diff, calendarIds} = await populateCalendars({entries, wardIds})
 
   await sendEmails(diff, calendarIds)
 }
