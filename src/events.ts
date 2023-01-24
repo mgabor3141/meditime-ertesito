@@ -136,16 +136,17 @@ export const entryToEvent = (
   wardIds: WardIds,
 ): CalendarEvent | null => {
   const {Type, WardId} = entry
-  const wardName = WardId
-    ? _.get(wardIds, WardId, (id: number) => {
-        console.log(
-          `No ward name found for ID: ${id}\nEvent details: ${JSON.stringify(
-            entry,
-          )}`,
-        )
-        return `ID${WardId}`
-      })
-    : '???'
+  let wardName
+  if (WardId && WardId in wardIds) {
+    wardName = wardIds[WardId]
+  } else {
+    console.log(
+      `No ward name found for ID: ${WardId}\n  Event details: ${JSON.stringify(
+        entry,
+      )}`,
+    )
+    wardName = `ID${WardId}`
+  }
 
   if (
     !(
