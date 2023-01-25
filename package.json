@@ -1,4 +1,7 @@
 {
+  "name": "meditime-ertesito",
+  "version": "4.1.0",
+  "author": "mgabor",
   "scripts": {
     "dev": "node --icu-data-dir=node_modules/full-icu -r dotenv/config -r ts-node/register src/index.ts",
     "build": "tsc",
@@ -32,9 +35,6 @@
     "prettier": "^2.3.0",
     "typescript": "^4.3.2"
   },
-  "name": "meditime-ertesito",
-  "version": "4.0.0",
-  "author": "mgabor",
   "private": true,
   "packageManager": "yarn@3.3.1"
 }
