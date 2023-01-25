@@ -4,7 +4,7 @@ import {Entry} from './parse'
 /**
  * We only want one entry for certain types, not multiple ones for each Ward for one day
  */
-const ONE_PER_DAY: LabelTypes[] = ['SZAB', 'TAN', 'PIH']
+const ONE_PER_DAY: LabelTypes[] = ['SZAB', 'TAN', 'PIH', 'SZB', 'NSZB']
 
 /**
  *  Determines which entries are considered the same from a calendar entry standpoint
