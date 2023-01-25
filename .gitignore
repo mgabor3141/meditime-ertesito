@@ -6,7 +6,6 @@
 /data/
 /credentials/
 
-screenshots/
 
 # Yarn Modern Zero-Installs
 .yarn/*

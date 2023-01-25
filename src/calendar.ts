@@ -1,6 +1,6 @@
 import {Data} from './get'
-import {google} from 'googleapis'
-import {users} from './users'
+import {calendar_v3, google} from 'googleapis'
+import {User, users} from './users'
 import {
   CalendarEvent,
   calendarTimeToDate,
@@ -10,6 +10,7 @@ import {
 import {retry} from './helpers'
 import _ from 'lodash'
 import {scriptStartDate} from './dates'
+import Schema$CalendarListEntry = calendar_v3.Schema$CalendarListEntry
 
 const auth = new google.auth.GoogleAuth({
   keyFile: `${process.env.DATA_PATH}/calendar-service-account.json`,
@@ -98,41 +99,11 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
   const diff: Diff = {}
   const calendarIds: Record<string, string> = {}
 
-  for (const [userId, {email, name}] of Object.entries(users)) {
+  for (const user of Object.entries(users)) {
+    const [userId, {name}] = user
     diff[userId] = {added: [], removed: []}
 
-    let calendarId = calendars?.find(({description}) =>
-      description?.startsWith(userId.toString()),
-    )?.id
-
-    // Create calendar if it doesn't exist yet
-    if (!calendarId) {
-      console.log('Creating calendar for', email)
-
-      const {
-        data: {id: newCalendarId},
-      } = await calendar.calendars.insert({
-        requestBody: {
-          summary: `Meditime - ${name}`,
-          description: userId,
-        },
-      })
-
-      if (!newCalendarId) throw new Error('Could not create calendar')
-
-      console.log('New calendar ID:', newCalendarId)
-
-      await calendar.acl.insert({
-        calendarId: newCalendarId,
-        requestBody: {
-          scope: {type: 'user', value: process.env.SENDER_EMAIL},
-          role: 'owner',
-        },
-      })
-
-      calendarId = newCalendarId
-    }
-
+    const calendarId = await getCalendarId(calendars, user)
     calendarIds[userId] = calendarId
 
     console.log(`Processing calendar for ${name} ${userId}`)
@@ -194,4 +165,47 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
   }
 
   return {diff, calendarIds}
+}
+
+const getCalendarId = async (
+  calendars: Schema$CalendarListEntry[] | undefined,
+  user: [string, User],
+): Promise<string> => {
+  const [userId] = user
+  const calendarId = calendars?.find(({description}) =>
+    description?.startsWith(userId.toString()),
+  )?.id
+
+  if (calendarId) return calendarId
+  else return await createCalendar(user)
+}
+
+const createCalendar = async ([userId, {name, email}]: [
+  string,
+  User,
+]): Promise<string> => {
+  console.log('Creating calendar for', email)
+
+  const {
+    data: {id: newCalendarId},
+  } = await calendar.calendars.insert({
+    requestBody: {
+      summary: `Meditime - ${name}`,
+      description: userId,
+    },
+  })
+
+  if (!newCalendarId) throw new Error('Could not create calendar')
+
+  console.log('New calendar ID:', newCalendarId)
+
+  await calendar.acl.insert({
+    calendarId: newCalendarId,
+    requestBody: {
+      scope: {type: 'user', value: process.env.SENDER_EMAIL},
+      role: 'owner',
+    },
+  })
+
+  return newCalendarId
 }
