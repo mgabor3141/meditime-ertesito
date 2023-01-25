@@ -169,6 +169,10 @@ export const getData = async (): Promise<Entry[]> => {
 }
 
 const loadEverything = async (page: Page) => {
+  await page.waitForXPath('//button/div/i[contains(@class, "fa-spinner")]', {
+    hidden: true,
+  })
+
   const spinnerPath = '//div[text()="Adatok betöltése folyamatban"]'
   await page.waitForXPath(spinnerPath)
 
