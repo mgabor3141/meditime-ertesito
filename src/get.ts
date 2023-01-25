@@ -43,7 +43,7 @@ export const getData = async (): Promise<Entry[]> => {
   // Prepare page
   const browser = await puppeteer.launch({
     defaultViewport: {width: 1080, height: 800},
-    args: ['--no-sandbox'],
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
     // headless: false,
   })
   const page = await browser.newPage()
