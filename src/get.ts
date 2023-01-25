@@ -18,7 +18,7 @@ const xPath = async (
 
   const res = await page.$x(path)
 
-  if (res.length === 0) throw `Not found: ${path}`
+  if (res.length === 0) throw new Error(`Not found: ${path}`)
 
   return res[0] as ElementHandle<Element>
 }
@@ -35,7 +35,7 @@ export const getData = async (): Promise<Entry[]> => {
   }
 
   if (!process.env.MEDITIME_USERNAME || !process.env.MEDITIME_PASSWORD)
-    throw 'No username/password found in env'
+    throw new Error('No username/password found in env')
 
   console.log(`[${Math.floor(process.uptime())}s] Opening Meditime`)
 
@@ -97,6 +97,9 @@ export const getData = async (): Promise<Entry[]> => {
       )
     }
 
+    if (entries.length === 0) throw new Error('No shift entries found!')
+    const shiftEntries = entries.length
+
     process.stdout.write(
       ` [${Math.floor(process.uptime())}s] Done! ${
         entries.length
@@ -128,6 +131,9 @@ export const getData = async (): Promise<Entry[]> => {
       )
     }
 
+    if (entries.length === shiftEntries)
+      throw new Error('No night entries found!')
+
     console.log(
       ` [${Math.floor(process.uptime())}s] Done! ${
         entries.length
@@ -147,7 +153,14 @@ export const getData = async (): Promise<Entry[]> => {
 
     return filteredEntries
   } catch (e) {
-    // await page.screenshot({path: 'screenshots/error.jpg'})
+    const time = new Date().toUTCString()
+    await page.screenshot({
+      path: `${process.env.DATA_PATH}/screenshots/error_${time}.jpg`,
+    })
+    await fs.writeFile(
+      `${process.env.DATA_PATH}/screenshots/error_${time}.txt`,
+      e instanceof Error ? e.stack : e,
+    )
     throw e
   } finally {
     await browser.close()
