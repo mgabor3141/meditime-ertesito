@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import puppeteer, {ElementHandle, Page} from 'puppeteer'
+import {filterFunction, mapFunction} from './filter'
 import {Entry, parseMonth} from './parse'
 import {promises as fs} from 'fs'
 
@@ -139,7 +140,7 @@ export const getData = async (): Promise<Entry[]> => {
         entries.length
       } entries total`,
     )
-    const filteredEntries = _.uniqWith(entries, _.isEqual)
+    const filteredEntries = _.uniqWith(entries, filterFunction).map(mapFunction)
     console.log(
       `[${Math.floor(process.uptime())}s] ${
         filteredEntries.length
