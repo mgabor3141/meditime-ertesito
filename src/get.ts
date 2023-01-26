@@ -42,9 +42,9 @@ export const getData = async (): Promise<Entry[]> => {
 
   // Prepare page
   const browser = await puppeteer.launch({
-    defaultViewport: {width: 1080, height: 800},
+    defaultViewport: {width: 1080, height: 700},
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
-    // headless: false,
+    headless: false,
   })
   const page = await browser.newPage()
 
@@ -65,6 +65,8 @@ export const getData = async (): Promise<Entry[]> => {
     await page.click('div.login input[type="checkbox"]')
     await page.click('div.login button.rz-button.btn-primary')
     await page.waitForSelector('table#scheduleSimpleView')
+
+    console.log(`[${Math.floor(process.uptime())}s] Preparing`)
 
     // Prepare filters
     await clickXPath(
@@ -112,9 +114,6 @@ export const getData = async (): Promise<Entry[]> => {
     // Night shifts
     await page.goto('https://meditime.today/dutySchedule')
 
-    await clickXPath(page, '//button/div/i[contains(@class, "fa-history")]')
-    // Not strictly necessary to load everything here
-    await loadEverything(page)
     await clickXPath(
       page,
       '//button/div/i[contains(@class, "fa-angle-double-left")]',
@@ -168,32 +167,57 @@ export const getData = async (): Promise<Entry[]> => {
   }
 }
 
+type DocumentWithState = Document & {
+  ___numTBody___?: number
+  ___seenTBodyIncrease___?: true
+}
+
 const loadEverything = async (page: Page) => {
+  // Wait for small spinner that replaces the month arrow button to disappear
   await page.waitForXPath('//button/div/i[contains(@class, "fa-spinner")]', {
     hidden: true,
   })
 
-  const spinnerPath = '//div[text()="Adatok betöltése folyamatban"]'
-  await page.waitForXPath(spinnerPath)
+  await page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]')
+  await page.waitForFunction(
+    () => {
+      const table = document.getElementById('scheduleSimpleView')
+      if (!table) return false
 
-  for (;;) {
-    const spinnerResults = await page.$x(spinnerPath)
+      const numTBody = table.getElementsByTagName('tbody').length
 
-    if (spinnerResults.length === 0) return
+      if (
+        (document as DocumentWithState).___numTBody___ !== undefined &&
+        numTBody > (document as Required<DocumentWithState>).___numTBody___
+      )
+        (document as DocumentWithState).___seenTBodyIncrease___ = true
+      ;(document as DocumentWithState).___numTBody___ = numTBody
 
-    const spinner = spinnerResults[0] as ElementHandle<Element>
+      if (!(document as DocumentWithState).___seenTBodyIncrease___) return false
 
-    const numTBody = (await page.$x('tbody')).length
-    const watchDog = page.waitForXPath(`//tbody[${numTBody + 1}]`) // XPath indexes from 1
+      const spinnerQuery = Array.from(
+        table.querySelectorAll('div.text-center'),
+      ).filter((div) => div.innerHTML === 'Adatok betöltése folyamatban')
 
-    try {
-      // This is sometimes not found by the time we get here so we ust return
-      await spinner.click() // Scrolls into view
-    } catch {
-      // This may swallow unrelated exceptions...
-      return
-    }
+      if (spinnerQuery.length === 0) {
+        // True if we've seen an increase
+        return (document as DocumentWithState).___seenTBodyIncrease___
+      }
 
-    await watchDog
-  }
+      document.scrollingElement?.scrollTo({
+        left: 0,
+        top: document.scrollingElement.scrollHeight,
+      })
+      const scrollBox = document.getElementById('dragToScrollContent')
+      if (!scrollBox) return false
+
+      scrollBox.scroll({
+        left: 0,
+        top: scrollBox.scrollHeight,
+        behavior: 'smooth',
+      })
+      return false
+    },
+    {polling: 'mutation', timeout: 60_000},
+  )
 }
