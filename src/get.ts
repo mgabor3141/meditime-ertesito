@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import puppeteer, {ElementHandle, Page} from 'puppeteer'
+import puppeteer, {ElementHandle, Page, TimeoutError} from 'puppeteer'
 import {filterFunction, mapFunction} from './filter'
 import {Entry, parseMonth} from './parse'
 import {promises as fs} from 'fs'
@@ -169,6 +169,7 @@ export const getData = async (): Promise<Entry[]> => {
 }
 
 const loadEverything = async (page: Page) => {
+  // Wait for small spinner that replaces the month arrow button to disappear
   await page.waitForXPath('//button/div/i[contains(@class, "fa-spinner")]', {
     hidden: true,
   })
@@ -183,17 +184,38 @@ const loadEverything = async (page: Page) => {
 
     const spinner = spinnerResults[0] as ElementHandle<Element>
 
-    const numTBody = (await page.$x('tbody')).length
-    const watchDog = page.waitForXPath(`//tbody[${numTBody + 1}]`) // XPath indexes from 1
+    const numTBody = (await page.$x('//tbody')).length
+    const watchDog = page.waitForXPath(
+      `//tbody[${numTBody + 1}]`, // XPath indexes from 1
+      {
+        timeout: 10_000,
+      },
+    )
 
     try {
-      // This is sometimes not found by the time we get here so we ust return
       await spinner.click() // Scrolls into view
-    } catch {
-      // This may swallow unrelated exceptions...
-      return
+    } catch (e) {
+      // Spinner is sometimes gone by the time we get here
+      if (
+        !(
+          e instanceof Error &&
+          (e.message === 'Node is either not clickable or not an HTMLElement' ||
+            e.message === 'Node is detached from document')
+        )
+      ) {
+        // All other errors we rethrow
+        throw e
+      }
+    } finally {
+      // We first wait for the watchdog though, so we don't close the browser out from under it
+      // This can be needless waiting unfortunately, TODO: fix
+      // Potential fix: waitFunction that waits for either no spinner or added tbody
+      try {
+        await watchDog
+      } catch (e) {
+        // Timeouts are ignored
+        if (!(e instanceof TimeoutError)) throw e
+      }
     }
-
-    await watchDog
   }
 }
