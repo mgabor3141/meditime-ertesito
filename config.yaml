@@ -10,4 +10,4 @@ arch:
   - armv7
   - i386
 map:
-  - addons
+  - addons:rw
