@@ -2,28 +2,29 @@ import {LabelTypes} from './events'
 import {Entry} from './parse'
 
 /**
- * We only want one entry for certain types, not multiple ones for each Ward for one day
- */
-const ONE_PER_DAY: LabelTypes[] = ['SZAB', 'TAN', 'PIH', 'SZB', 'NSZB', 'KGY']
-
-/**
  *  Determines which entries are considered the same from a calendar entry standpoint
+ *
+ *  @param onePerDay We only want one entry for certain types, not multiple ones for each Ward for one day
  */
-export const filterFunction = (value: Entry, other: Entry): boolean =>
-  value.UserId === other.UserId &&
-  value.Date === other.Date &&
-  value.Type === other.Type &&
-  (value.WardId === other.WardId ||
-    value.WardId === undefined ||
-    other.WardId === undefined ||
-    ONE_PER_DAY.includes(value.Type))
+export const filterFunction =
+  (onePerDay: LabelTypes[]) =>
+  (value: Entry, other: Entry): boolean =>
+    value.UserId === other.UserId &&
+    value.Date === other.Date &&
+    value.Type === other.Type &&
+    (value.WardId === other.WardId ||
+      value.WardId === undefined ||
+      other.WardId === undefined ||
+      onePerDay.includes(value.Type))
 
 /**
- * For ONE_PER_DAY types we set a special WardId so that it's deterministic what remains there after filtering
+ * For onePerDay types we set a special WardId so that it's deterministic what remains there after filtering
  */
-export const mapFunction = (value: Entry): Entry => {
-  if (ONE_PER_DAY.includes(value.Type)) {
-    value.WardId = -1
+export const mapFunction =
+  (onePerDay: LabelTypes[]) =>
+  (value: Entry): Entry => {
+    if (onePerDay.includes(value.Type)) {
+      value.WardId = -1
+    }
+    return value
   }
-  return value
-}

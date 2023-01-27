@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import puppeteer, {ElementHandle, Page} from 'puppeteer'
+import {LabelTypes} from './events'
 import {filterFunction, mapFunction} from './filter'
 import {Entry, parseMonth} from './parse'
 import {promises as fs} from 'fs'
@@ -139,7 +140,17 @@ export const getData = async (): Promise<Entry[]> => {
         entries.length
       } entries total`,
     )
-    const filteredEntries = _.uniqWith(entries, filterFunction).map(mapFunction)
+
+    // Labels to deduplicate within a given day
+    const onePerDay: LabelTypes[] = JSON.parse(
+      (
+        await fs.readFile(`${process.env.DATA_PATH}/one_per_day.json`)
+      ).toString(),
+    )
+    const filteredEntries = _.uniqWith(entries, filterFunction(onePerDay)).map(
+      mapFunction(onePerDay),
+    )
+
     console.log(
       `[${Math.floor(process.uptime())}s] ${
         filteredEntries.length

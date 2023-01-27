@@ -1,6 +1,6 @@
 name: 'Meditime Ertesito'
 description: 'A Home Assistant addon'
-version: '4.2.0'
+version: '4.2.1'
 slug: 'meditime_ertesito'
 init: false
 arch:
