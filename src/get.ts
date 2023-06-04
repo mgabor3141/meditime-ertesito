@@ -50,7 +50,7 @@ export const getData = async (): Promise<Entry[]> => {
   const page = await browser.newPage()
 
   try {
-    await page.goto('https://meditime.today/wardSchedule')
+    await page.goto('https://meditime.today/')
     await page.waitForSelector('div.login input[type="text"]')
 
     // Log in
@@ -65,6 +65,13 @@ export const getData = async (): Promise<Entry[]> => {
     )
     await page.click('div.login input[type="checkbox"]')
     await page.click('div.login button.rz-button.btn-primary')
+
+    // Wait a bit to make sure that the home page is done loading
+    await new Promise((r) => setTimeout(r, 10000))
+
+    await page.click('a[title="Részleg modul"]')
+    await page.waitForSelector('a[href="/wardSchedule"]')
+    await page.click('a[href="/wardSchedule"]')
     await page.waitForSelector('table#scheduleSimpleView')
 
     console.log(`[${Math.floor(process.uptime())}s] Preparing`)
@@ -113,7 +120,10 @@ export const getData = async (): Promise<Entry[]> => {
     )
 
     // Night shifts
-    await page.goto('https://meditime.today/dutySchedule')
+    await page.click('a[title="Ügyelet modul"]')
+    await page.waitForSelector('a[href="/dutySchedule"]')
+    await page.click('a[href="/dutySchedule"]')
+    await page.waitForSelector('table#scheduleSimpleView')
 
     await clickXPath(
       page,
