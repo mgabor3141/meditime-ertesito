@@ -87,8 +87,10 @@ export const getData = async (): Promise<Entry[]> => {
     )
 
     await clickXPath(page, '//button/div/i[contains(@class, "fa-history")]')
-    // Not strictly necessary to load everything here
-    await loadEverything(page)
+
+    // Wait 10 seconds for the page to load (waiting for exact event is flaky here)
+    await new Promise((resolve) => setTimeout(resolve, 10 * 1000))
+
     await clickXPath(
       page,
       '//button/div/i[contains(@class, "fa-angle-double-left")]',

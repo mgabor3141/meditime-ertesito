@@ -1,6 +1,6 @@
 {
   "name": "meditime-ertesito",
-  "version": "4.3.0",
+  "version": "4.3.1",
   "author": "mgabor",
   "scripts": {
     "dev": "node --icu-data-dir=node_modules/full-icu -r dotenv/config -r ts-node/register src/index.ts",
