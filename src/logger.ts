@@ -4,4 +4,5 @@ export const log = pino({
   transport: {
     target: 'pino-pretty',
   },
+  level: 'trace',
 })

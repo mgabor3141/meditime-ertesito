@@ -77,19 +77,24 @@ export const getData = async (): Promise<Entry[]> => {
 
     log.info('Preparing')
 
+    log.trace('Prepare "Orvos" filter')
     // Prepare filters
     await clickXPath(
       page,
       '//div[contains(@class, "rz-selectbutton")]/div/span[contains(text(), "Orvos")]',
     )
+    log.trace('Prepare "Havi" filter')
     await clickXPath(
       page,
       '//div[contains(@class, "rz-selectbutton")]/div/span[contains(text(), "Havi")]',
     )
 
+    log.trace('Click "fa-history" button')
     await clickXPath(page, '//button/div/i[contains(@class, "fa-history")]')
+    log.trace('Wait for page to finish loading')
     // Not strictly necessary to load everything here
     await loadEverything(page)
+    log.trace('Click left button')
     await clickXPath(
       page,
       '//button/div/i[contains(@class, "fa-angle-double-left")]',
