@@ -1,4 +1,4 @@
-import fs from 'fs'
+import {options} from './options'
 
 export type User = {
   name?: string
@@ -7,9 +7,7 @@ export type User = {
 
 export type Users = Record<string, User>
 
-export const users: Users = JSON.parse(
-  fs.readFileSync(`${process.env.DATA_PATH}/users.json`).toString(),
-)
+export const users: Users = options.users
 
 export const isUser = (id: string) => Object.keys(users).includes(id)
 

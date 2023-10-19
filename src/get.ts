@@ -2,6 +2,7 @@ import _ from 'lodash'
 import puppeteer, {ElementHandle, Page} from 'puppeteer'
 import {LabelTypes} from './events'
 import {filterFunction, mapFunction} from './filter'
+import {options} from './options'
 import {Entry, parseMonth} from './parse'
 import {promises as fs} from 'fs'
 import {log} from './logger'
@@ -101,7 +102,7 @@ export const getData = async (): Promise<Entry[]> => {
     await loadEverything(page, () =>
       clickXPath(
         page,
-        '//button/div/i[contains(@class, "fa-angle-double-left")]/../..',
+        '//button/div/i[contains(@class, "fa-angle-double-left")]',
       ),
     )
 
@@ -155,11 +156,7 @@ export const getData = async (): Promise<Entry[]> => {
     log.info(`Done! ${entries.length} entries total`)
 
     // Labels to deduplicate within a given day
-    const onePerDay: LabelTypes[] = JSON.parse(
-      (
-        await fs.readFile(`${process.env.DATA_PATH}/one_per_day.json`)
-      ).toString(),
-    )
+    const onePerDay = options.onePerDay as LabelTypes[]
     const filteredEntries = _.uniqWith(entries, filterFunction(onePerDay)).map(
       mapFunction(onePerDay),
     )
@@ -173,7 +170,7 @@ export const getData = async (): Promise<Entry[]> => {
 
     return filteredEntries
   } catch (e) {
-    const time = new Date().toUTCString()
+    const time = new Date().toISOString()
     await page.screenshot({
       path: `${process.env.DATA_PATH}/screenshots/error_${time}.jpg`,
     })
@@ -194,61 +191,61 @@ type DocumentWithState = Document & {
 
 const loadEverything = async (
   page: Page,
-  interaction: () => Promise<unknown> = () => Promise.resolve(),
-) =>
-  Promise.all([
-    (async () => {
-      // Wait for small spinner that replaces the month arrow button to disappear
-      await page.waitForXPath(
-        '//button/div/i[contains(@class, "fa-spinner")]',
-        {
-          hidden: true,
-        },
-      )
+  interaction: () => Promise<unknown> = async () => {},
+) => {
+  log.trace('Wait for small button spinner to disappear')
+  await page.waitForXPath('//button/div/i[contains(@class, "fa-spinner")]', {
+    hidden: true,
+  })
 
-      await page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]')
-      await page.waitForFunction(
-        () => {
-          const table = document.getElementById('scheduleSimpleView')
-          if (!table) return false
-
-          const numTBody = table.getElementsByTagName('tbody').length
-
-          if (
-            (document as DocumentWithState).___numTBody___ !== undefined &&
-            numTBody > (document as Required<DocumentWithState>).___numTBody___
-          )
-            (document as DocumentWithState).___seenTBodyIncrease___ = true
-          ;(document as DocumentWithState).___numTBody___ = numTBody
-
-          if (!(document as DocumentWithState).___seenTBodyIncrease___)
-            return false
-
-          const spinnerQuery = Array.from(
-            table.querySelectorAll('div.text-center'),
-          ).filter((div) => div.innerHTML === 'Adatok betöltése folyamatban')
-
-          if (spinnerQuery.length === 0) {
-            // True if we've seen an increase
-            return (document as DocumentWithState).___seenTBodyIncrease___
-          }
-
-          document.scrollingElement?.scrollTo({
-            left: 0,
-            top: document.scrollingElement.scrollHeight,
-          })
-          const scrollBox = document.getElementById('dragToScrollContent')
-          if (!scrollBox) return false
-
-          scrollBox.scroll({
-            left: 0,
-            top: scrollBox.scrollHeight,
-            behavior: 'smooth',
-          })
-          return false
-        },
-        {polling: 'mutation', timeout: 60_000},
-      )
-    })(),
+  log.trace("Waiting for 'Adatok betöltése folyamatban' to appear")
+  await Promise.all([
+    page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]'),
     interaction(),
   ])
+
+  await page.waitForFunction(
+    () => {
+      const table = document.getElementById('scheduleSimpleView')
+      if (!table) return false
+
+      const numTBody = table.getElementsByTagName('tbody').length
+
+      if (
+        (document as DocumentWithState).___numTBody___ !== undefined &&
+        numTBody > (document as Required<DocumentWithState>).___numTBody___
+      )
+        (document as DocumentWithState).___seenTBodyIncrease___ = true
+      ;(document as DocumentWithState).___numTBody___ = numTBody
+
+      if (!(document as DocumentWithState).___seenTBodyIncrease___) return false
+
+      const spinnerQuery = Array.from(
+        table.querySelectorAll('div.text-center'),
+      ).filter((div) => div.innerHTML === 'Adatok betöltése folyamatban')
+
+      if (spinnerQuery.length === 0) {
+        // True if we've seen an increase
+        return (document as DocumentWithState).___seenTBodyIncrease___
+      }
+
+      document.scrollingElement?.scrollTo({
+        left: 0,
+        top: document.scrollingElement.scrollHeight,
+      })
+      const scrollBox = document.getElementById('dragToScrollContent')
+      if (!scrollBox) return false
+
+      scrollBox.scroll({
+        left: 0,
+        top: scrollBox.scrollHeight,
+        behavior: 'smooth',
+      })
+      return false
+    },
+    {polling: 'mutation', timeout: 60_000},
+  )
+
+  // Wait until page becomes active after the above function
+  await new Promise((r) => setTimeout(r, 500))
+}
