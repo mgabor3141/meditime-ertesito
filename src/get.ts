@@ -26,40 +26,8 @@ const xPath = async (
   return res[0] as ElementHandle<Element>
 }
 
-const clickXPath = async (page: Page, path: string) => {
-  log.trace(`Clicking ${path}`)
-  // const element = await xPath(page, path)
-  // log.trace(`Element found for ${path}: ${element}`)
-  // await element.click()
-
-  await xPath(page, path)
-  // await page.$eval(`xpath${path}`, (element) =>
-  //   // @ts-ignore
-  //   element.click(),
-  // )
-  // await page.click(`xpath${path}`)
-
-  await page.evaluate((path) => {
-    const clickEvent = new MouseEvent('click', {
-      view: window,
-      bubbles: true,
-      cancelable: false,
-    })
-
-    const element =
-      // @ts-ignore
-      document.evaluate(
-        path,
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null,
-      ).singleNodeValue
-
-    console.log(element)
-    element?.dispatchEvent(clickEvent)
-  }, path)
-}
+const clickXPath = async (page: Page, path: string) =>
+  await (await xPath(page, path)).click()
 
 export const getData = async (): Promise<Entry[]> => {
   if (process.env.LOCAL_SOURCE === 'true') {
@@ -121,33 +89,28 @@ export const getData = async (): Promise<Entry[]> => {
       '//div[contains(@class, "rz-selectbutton")]/div/span[contains(text(), "Havi")]',
     )
 
-    log.trace(
-      'Click "fa-history" (jump to today) button and wait for page to scroll load',
-    )
+    log.trace('Click "fa-history" button')
+    await clickXPath(page, '//button/div/i[contains(@class, "fa-history")]')
+    log.trace('Wait for page to finish loading')
     // Not strictly necessary to load everything here
-    await loadEverything(page, () =>
-      clickXPath(page, '//button/div/i[contains(@class, "fa-history")]'),
-    )
-    log.trace('Click left button and wait for page to scroll load')
-    await loadEverything(page, () =>
-      clickXPath(
-        page,
-        '//button/div/i[contains(@class, "fa-angle-double-left")]/../..',
-      ),
+    await loadEverything(page)
+    log.trace('Click left button')
+    await clickXPath(
+      page,
+      '//button/div/i[contains(@class, "fa-angle-double-left")]',
     )
 
     const entries = []
     log.info('Retrieving shifts')
     for (;;) {
       log.trace('Starting to parse next month')
+      await loadEverything(page)
       const newEntries = await parseMonth(page)
       if (newEntries.length === 0) break
       entries.push(...newEntries)
-      await loadEverything(page, () =>
-        clickXPath(
-          page,
-          '//button/div/i[contains(@class, "fa-angle-double-right")]',
-        ),
+      await clickXPath(
+        page,
+        '//button/div/i[contains(@class, "fa-angle-double-right")]',
       )
     }
 
@@ -223,58 +186,52 @@ type DocumentWithState = Document & {
   ___seenTBodyIncrease___?: true
 }
 
-const loadEverything = async (
-  page: Page,
-  interaction: () => Promise<unknown> = () => Promise.resolve(),
-) =>
-  Promise.all([
-    interaction(),
-    // Wait for small spinner that replaces the month arrow button to disappear
-    page.waitForXPath('//button/div/i[contains(@class, "fa-spinner")]', {
-      hidden: true,
-    }),
+const loadEverything = async (page: Page) => {
+  // Wait for small spinner that replaces the month arrow button to disappear
+  await page.waitForXPath('//button/div/i[contains(@class, "fa-spinner")]', {
+    hidden: true,
+  })
 
-    page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]'),
-    page.waitForFunction(
-      () => {
-        const table = document.getElementById('scheduleSimpleView')
-        if (!table) return false
+  await page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]')
+  await page.waitForFunction(
+    () => {
+      const table = document.getElementById('scheduleSimpleView')
+      if (!table) return false
 
-        const numTBody = table.getElementsByTagName('tbody').length
+      const numTBody = table.getElementsByTagName('tbody').length
 
-        if (
-          (document as DocumentWithState).___numTBody___ !== undefined &&
-          numTBody > (document as Required<DocumentWithState>).___numTBody___
-        )
-          (document as DocumentWithState).___seenTBodyIncrease___ = true
-        ;(document as DocumentWithState).___numTBody___ = numTBody
+      if (
+        (document as DocumentWithState).___numTBody___ !== undefined &&
+        numTBody > (document as Required<DocumentWithState>).___numTBody___
+      )
+        (document as DocumentWithState).___seenTBodyIncrease___ = true
+      ;(document as DocumentWithState).___numTBody___ = numTBody
 
-        if (!(document as DocumentWithState).___seenTBodyIncrease___)
-          return false
+      if (!(document as DocumentWithState).___seenTBodyIncrease___) return false
 
-        const spinnerQuery = Array.from(
-          table.querySelectorAll('div.text-center'),
-        ).filter((div) => div.innerHTML === 'Adatok betöltése folyamatban')
+      const spinnerQuery = Array.from(
+        table.querySelectorAll('div.text-center'),
+      ).filter((div) => div.innerHTML === 'Adatok betöltése folyamatban')
 
-        if (spinnerQuery.length === 0) {
-          // True if we've seen an increase
-          return (document as DocumentWithState).___seenTBodyIncrease___
-        }
+      if (spinnerQuery.length === 0) {
+        // True if we've seen an increase
+        return (document as DocumentWithState).___seenTBodyIncrease___
+      }
 
-        document.scrollingElement?.scrollTo({
-          left: 0,
-          top: document.scrollingElement.scrollHeight,
-        })
-        const scrollBox = document.getElementById('dragToScrollContent')
-        if (!scrollBox) return false
+      document.scrollingElement?.scrollTo({
+        left: 0,
+        top: document.scrollingElement.scrollHeight,
+      })
+      const scrollBox = document.getElementById('dragToScrollContent')
+      if (!scrollBox) return false
 
-        scrollBox.scroll({
-          left: 0,
-          top: scrollBox.scrollHeight,
-          behavior: 'smooth',
-        })
-        return false
-      },
-      {polling: 'mutation', timeout: 60_000},
-    ),
-  ])
+      scrollBox.scroll({
+        left: 0,
+        top: scrollBox.scrollHeight,
+        behavior: 'smooth',
+      })
+      return false
+    },
+    {polling: 'mutation', timeout: 60_000},
+  )
+}
