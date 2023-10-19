@@ -2,6 +2,7 @@ import {promises as fs} from 'fs'
 import {sendEmails} from './email'
 import {getData} from './get'
 import {populateCalendars} from './calendar'
+import {log} from './logger'
 
 const main = async () => {
   const entries = await getData()
@@ -14,7 +15,7 @@ const main = async () => {
 
   await sendEmails(diff, calendarIds)
 
-  console.log('Done!')
+  log.info('Done!')
 }
 
 main()

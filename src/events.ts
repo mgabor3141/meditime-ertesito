@@ -1,4 +1,5 @@
 import hash from 'object-hash'
+import {log} from './logger'
 import {Entry} from './parse'
 import {WardIds} from './get'
 import _ from 'lodash'
@@ -140,7 +141,7 @@ export const entryToEvent = (
   if (WardId && WardId in wardIds) {
     wardName = wardIds[WardId]
   } else {
-    console.log(
+    log.error(
       `No ward name found for ID: ${WardId}\n  Event details: ${JSON.stringify(
         entry,
       )}`,

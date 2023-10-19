@@ -1,5 +1,6 @@
 import {Data} from './get'
 import {calendar_v3, google} from 'googleapis'
+import {log} from './logger'
 import {User, users} from './users'
 import {
   CalendarEvent,
@@ -26,7 +27,7 @@ const errorCode = (error: unknown, code: number) =>
   error.code === code
 
 const addEvent = async (calendarId: string, event: CalendarEvent) => {
-  console.log(
+  log.info(
     `Adding ${event.summary} (${
       event.start.date ? event.start.date : event.start.dateTime
     } - ${event.end.date ? event.end.date : event.end.dateTime}) [${event.id}]`,
@@ -73,7 +74,7 @@ const addEvent = async (calendarId: string, event: CalendarEvent) => {
 }
 
 const removeEvent = async (calendarId: string, eventId: string) => {
-  console.log('Removing', eventId)
+  log.info('Removing', eventId)
 
   await retry(async (bail) => {
     try {
@@ -106,7 +107,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
     const calendarId = await getCalendarId(calendars, user)
     calendarIds[userId] = calendarId
 
-    console.log(`Processing calendar for ${name} ${userId}`)
+    log.info(`Processing calendar for ${name} ${userId}`)
 
     const userEntries = processEvents(
       _.compact(
@@ -184,7 +185,7 @@ const createCalendar = async ([userId, {name, email}]: [
   string,
   User,
 ]): Promise<string> => {
-  console.log('Creating calendar for', email)
+  log.info('Creating calendar for', email)
 
   const {
     data: {id: newCalendarId},
@@ -197,7 +198,7 @@ const createCalendar = async ([userId, {name, email}]: [
 
   if (!newCalendarId) throw new Error('Could not create calendar')
 
-  console.log('New calendar ID:', newCalendarId)
+  log.info('New calendar ID:', newCalendarId)
 
   await calendar.acl.insert({
     calendarId: newCalendarId,

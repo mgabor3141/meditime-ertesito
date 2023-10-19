@@ -79,6 +79,6 @@ export const sendEmails = async (
         diff: processedDiff,
       },
     })
-    console.log(`Email sent to ${users[userId].name}`)
+    log.info(`Email sent to ${users[userId].name}`)
   }
 }

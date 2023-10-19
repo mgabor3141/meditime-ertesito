@@ -4,6 +4,7 @@ import {LabelTypes} from './events'
 import {filterFunction, mapFunction} from './filter'
 import {Entry, parseMonth} from './parse'
 import {promises as fs} from 'fs'
+import {log} from './logger'
 
 export type WardIds = Record<string, string>
 
@@ -30,7 +31,7 @@ const clickXPath = async (page: Page, path: string) =>
 
 export const getData = async (): Promise<Entry[]> => {
   if (process.env.LOCAL_SOURCE === 'true') {
-    console.log('Retrieving shifts from file instead of Meditime')
+    log.info('Retrieving shifts from file instead of Meditime')
     return JSON.parse(
       (await fs.readFile(`${process.env.DATA_PATH}/entries.json`)).toString(),
     )
@@ -39,7 +40,7 @@ export const getData = async (): Promise<Entry[]> => {
   if (!process.env.MEDITIME_USERNAME || !process.env.MEDITIME_PASSWORD)
     throw new Error('No username/password found in env')
 
-  console.log(`[${Math.floor(process.uptime())}s] Opening Meditime`)
+  log.info('Opening Meditime')
 
   // Prepare page
   const browser = await puppeteer.launch({
@@ -54,7 +55,7 @@ export const getData = async (): Promise<Entry[]> => {
     await page.waitForSelector('div.login input[type="text"]')
 
     // Log in
-    console.log(`[${Math.floor(process.uptime())}s] Logging in`)
+    log.info('Logging in')
     await page.type(
       'div.login input[type="text"]',
       process.env.MEDITIME_USERNAME,
@@ -74,7 +75,7 @@ export const getData = async (): Promise<Entry[]> => {
     await page.click('a[href="/wardSchedule"]')
     await page.waitForSelector('table#scheduleSimpleView')
 
-    console.log(`[${Math.floor(process.uptime())}s] Preparing`)
+    log.info('Preparing')
 
     // Prepare filters
     await clickXPath(
@@ -87,19 +88,17 @@ export const getData = async (): Promise<Entry[]> => {
     )
 
     await clickXPath(page, '//button/div/i[contains(@class, "fa-history")]')
-
-    // Wait 10 seconds for the page to load (waiting for exact event is flaky here)
-    await new Promise((resolve) => setTimeout(resolve, 10 * 1000))
-
+    // Not strictly necessary to load everything here
+    await loadEverything(page)
     await clickXPath(
       page,
       '//button/div/i[contains(@class, "fa-angle-double-left")]',
     )
 
     const entries = []
-    process.stdout.write(`[${Math.floor(process.uptime())}s] Retrieving shifts`)
+    log.info('Retrieving shifts')
     for (;;) {
-      process.stdout.write('.')
+      log.trace('Starting to parse next month')
       await loadEverything(page)
       const newEntries = await parseMonth(page)
       if (newEntries.length === 0) break
@@ -113,13 +112,8 @@ export const getData = async (): Promise<Entry[]> => {
     if (entries.length === 0) throw new Error('No shift entries found!')
     const shiftEntries = entries.length
 
-    process.stdout.write(
-      ` [${Math.floor(process.uptime())}s] Done! ${
-        entries.length
-      } entries so far\n[${Math.floor(
-        process.uptime(),
-      )}s] Retrieving night shifts`,
-    )
+    log.info(`Done! ${entries.length} entries so far`)
+    log.info('Retrieving night shifts')
 
     // Night shifts
     await page.click('a[title="Ügyelet modul"]')
@@ -133,7 +127,7 @@ export const getData = async (): Promise<Entry[]> => {
     )
 
     for (;;) {
-      process.stdout.write('.')
+      log.trace('Starting to parse next month')
       await loadEverything(page)
       const newEntries = await parseMonth(page)
       if (newEntries.length === 0) break
@@ -147,11 +141,7 @@ export const getData = async (): Promise<Entry[]> => {
     if (entries.length === shiftEntries)
       throw new Error('No night entries found!')
 
-    console.log(
-      ` [${Math.floor(process.uptime())}s] Done! ${
-        entries.length
-      } entries total`,
-    )
+    log.info(`Done! ${entries.length} entries total`)
 
     // Labels to deduplicate within a given day
     const onePerDay: LabelTypes[] = JSON.parse(
@@ -163,11 +153,7 @@ export const getData = async (): Promise<Entry[]> => {
       mapFunction(onePerDay),
     )
 
-    console.log(
-      `[${Math.floor(process.uptime())}s] ${
-        filteredEntries.length
-      } entries after filtering`,
-    )
+    log.info(`${filteredEntries.length} entries after filtering`)
     if (process.env.WRITE_ENTRIES === 'true')
       await fs.writeFile(
         `${process.env.DATA_PATH}/entries.json`,
