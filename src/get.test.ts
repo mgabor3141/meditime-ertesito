@@ -9,6 +9,6 @@ describe('getData function', () => {
       const data2 = await getData()
       expect(data1).toEqual(data2)
     },
-    10 * 60 * 1000 /* 10 minutes */,
+    20 * 60 * 1000 /* 20 minutes */,
   )
 })

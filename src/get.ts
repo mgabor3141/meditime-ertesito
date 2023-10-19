@@ -89,28 +89,34 @@ export const getData = async (): Promise<Entry[]> => {
       '//div[contains(@class, "rz-selectbutton")]/div/span[contains(text(), "Havi")]',
     )
 
-    log.trace('Click "fa-history" button')
-    await clickXPath(page, '//button/div/i[contains(@class, "fa-history")]')
-    log.trace('Wait for page to finish loading')
+    log.trace(
+      'Click "fa-history" (jump to today) button and wait for page to scroll load',
+    )
     // Not strictly necessary to load everything here
-    await loadEverything(page)
-    log.trace('Click left button')
-    await clickXPath(
-      page,
-      '//button/div/i[contains(@class, "fa-angle-double-left")]',
+    await loadEverything(page, () =>
+      clickXPath(page, '//button/div/i[contains(@class, "fa-history")]'),
+    )
+
+    log.trace('Click left button and wait for page to scroll load')
+    await loadEverything(page, () =>
+      clickXPath(
+        page,
+        '//button/div/i[contains(@class, "fa-angle-double-left")]/../..',
+      ),
     )
 
     const entries = []
     log.info('Retrieving shifts')
     for (;;) {
       log.trace('Starting to parse next month')
-      await loadEverything(page)
       const newEntries = await parseMonth(page)
       if (newEntries.length === 0) break
       entries.push(...newEntries)
-      await clickXPath(
-        page,
-        '//button/div/i[contains(@class, "fa-angle-double-right")]',
+      await loadEverything(page, () =>
+        clickXPath(
+          page,
+          '//button/div/i[contains(@class, "fa-angle-double-right")]',
+        ),
       )
     }
 
@@ -186,52 +192,63 @@ type DocumentWithState = Document & {
   ___seenTBodyIncrease___?: true
 }
 
-const loadEverything = async (page: Page) => {
-  // Wait for small spinner that replaces the month arrow button to disappear
-  await page.waitForXPath('//button/div/i[contains(@class, "fa-spinner")]', {
-    hidden: true,
-  })
-
-  await page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]')
-  await page.waitForFunction(
-    () => {
-      const table = document.getElementById('scheduleSimpleView')
-      if (!table) return false
-
-      const numTBody = table.getElementsByTagName('tbody').length
-
-      if (
-        (document as DocumentWithState).___numTBody___ !== undefined &&
-        numTBody > (document as Required<DocumentWithState>).___numTBody___
+const loadEverything = async (
+  page: Page,
+  interaction: () => Promise<unknown> = () => Promise.resolve(),
+) =>
+  Promise.all([
+    (async () => {
+      // Wait for small spinner that replaces the month arrow button to disappear
+      await page.waitForXPath(
+        '//button/div/i[contains(@class, "fa-spinner")]',
+        {
+          hidden: true,
+        },
       )
-        (document as DocumentWithState).___seenTBodyIncrease___ = true
-      ;(document as DocumentWithState).___numTBody___ = numTBody
 
-      if (!(document as DocumentWithState).___seenTBodyIncrease___) return false
+      await page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]')
+      await page.waitForFunction(
+        () => {
+          const table = document.getElementById('scheduleSimpleView')
+          if (!table) return false
 
-      const spinnerQuery = Array.from(
-        table.querySelectorAll('div.text-center'),
-      ).filter((div) => div.innerHTML === 'Adatok betöltése folyamatban')
+          const numTBody = table.getElementsByTagName('tbody').length
 
-      if (spinnerQuery.length === 0) {
-        // True if we've seen an increase
-        return (document as DocumentWithState).___seenTBodyIncrease___
-      }
+          if (
+            (document as DocumentWithState).___numTBody___ !== undefined &&
+            numTBody > (document as Required<DocumentWithState>).___numTBody___
+          )
+            (document as DocumentWithState).___seenTBodyIncrease___ = true
+          ;(document as DocumentWithState).___numTBody___ = numTBody
 
-      document.scrollingElement?.scrollTo({
-        left: 0,
-        top: document.scrollingElement.scrollHeight,
-      })
-      const scrollBox = document.getElementById('dragToScrollContent')
-      if (!scrollBox) return false
+          if (!(document as DocumentWithState).___seenTBodyIncrease___)
+            return false
 
-      scrollBox.scroll({
-        left: 0,
-        top: scrollBox.scrollHeight,
-        behavior: 'smooth',
-      })
-      return false
-    },
-    {polling: 'mutation', timeout: 60_000},
-  )
-}
+          const spinnerQuery = Array.from(
+            table.querySelectorAll('div.text-center'),
+          ).filter((div) => div.innerHTML === 'Adatok betöltése folyamatban')
+
+          if (spinnerQuery.length === 0) {
+            // True if we've seen an increase
+            return (document as DocumentWithState).___seenTBodyIncrease___
+          }
+
+          document.scrollingElement?.scrollTo({
+            left: 0,
+            top: document.scrollingElement.scrollHeight,
+          })
+          const scrollBox = document.getElementById('dragToScrollContent')
+          if (!scrollBox) return false
+
+          scrollBox.scroll({
+            left: 0,
+            top: scrollBox.scrollHeight,
+            behavior: 'smooth',
+          })
+          return false
+        },
+        {polling: 'mutation', timeout: 60_000},
+      )
+    })(),
+    interaction(),
+  ])
