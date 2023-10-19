@@ -2,6 +2,7 @@ import _ from 'lodash'
 import {Diff} from './calendar'
 import Email from 'email-templates'
 import {CalendarEvent} from './events'
+import {log} from './logger'
 import {users} from './users'
 
 const email = new Email({
