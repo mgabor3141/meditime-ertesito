@@ -1,9 +1,9 @@
 import {readFileSync} from 'fs'
-import {Users} from './users'
+import {User} from './users'
 
 export type Options = {
   logLevel: string
-  users: Users
+  users: (User & {id: number})[]
   onePerDay: string[]
 }
 

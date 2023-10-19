@@ -1,6 +1,6 @@
 name: 'Meditime Ertesito'
 description: 'A Home Assistant addon'
-version: '4.4.0'
+version: '4.4.1'
 slug: 'meditime_ertesito'
 init: false
 arch:
@@ -18,7 +18,8 @@ options:
 schema:
   logLevel: list(silent|fatal|error|warn|info|debug|trace)
   users:
-    - name: str
+    - id: int
+      name: str
       email: email
   onePerDay:
     - str
