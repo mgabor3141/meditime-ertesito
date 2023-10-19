@@ -1,1 +1,2 @@
-0 * * * * date && yarn start
+@reboot yarn start
+0 * * * * yarn start
