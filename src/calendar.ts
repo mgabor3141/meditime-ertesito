@@ -173,11 +173,25 @@ const getCalendarId = async (
   user: [string, User],
 ): Promise<string> => {
   const [userId] = user
-  const calendarId = calendars?.find(({description}) =>
+  const matchingCalendars = calendars?.filter(({description}) =>
     description?.startsWith(userId.toString()),
-  )?.id
+  )
 
-  if (calendarId) return calendarId
+  if (!matchingCalendars) {
+    log.error("Couldn't get calendars")
+    throw new Error("Couldn't get calendars")
+  }
+
+  if (matchingCalendars.length > 1) {
+    log.warn(
+      `Multiple calendars found for ${user[1].name}:\n${JSON.stringify(
+        matchingCalendars,
+      )}`,
+    )
+  }
+
+  if (matchingCalendars.length >= 1 && matchingCalendars[0].id)
+    return matchingCalendars[0].id
   else return await createCalendar(user)
 }
 
