@@ -27,7 +27,7 @@ const errorCode = (error: unknown, code: number) =>
   error.code === code
 
 const addEvent = async (calendarId: string, event: CalendarEvent) => {
-  log.info(
+  log.debug(
     `Adding ${event.summary} (${
       event.start.date ? event.start.date : event.start.dateTime
     } - ${event.end.date ? event.end.date : event.end.dateTime}) [${event.id}]`,
@@ -74,7 +74,7 @@ const addEvent = async (calendarId: string, event: CalendarEvent) => {
 }
 
 const removeEvent = async (calendarId: string, eventId: string) => {
-  log.info('Removing', eventId)
+  log.debug('Removing', eventId)
 
   await retry(async (bail) => {
     try {

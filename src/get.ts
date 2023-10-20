@@ -166,7 +166,7 @@ export const getData = async (): Promise<Entry[]> => {
     if (process.env.WRITE_ENTRIES === 'true')
       await fs.writeFile(
         `${process.env.DATA_PATH}/entries.json`,
-        JSON.stringify(entries),
+        JSON.stringify(filteredEntries),
       )
 
     return filteredEntries
