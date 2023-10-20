@@ -1,9 +1,9 @@
+import _ from 'lodash'
 import hash from 'object-hash'
+import {weekNumber} from 'weeknumber'
+import {WardIds} from './get'
 import {log} from './logger'
 import {Entry} from './parse'
-import {WardIds} from './get'
-import _ from 'lodash'
-import {weekNumber} from 'weeknumber'
 
 type CalendarTime = {
   date?: string | null
@@ -166,21 +166,17 @@ export const entryToEvent = (
   if (WardId && (Type === 'M1' || Type === 'M2' || Type === 'HM'))
     summary = `[${Type}] ${wardName}`
 
-  const event = {
+  return {
     ...getTiming(entry),
     id: '',
     summary,
     description: `Osztály: ${wardName}`,
   }
-
-  event.id = hash(event, {excludeKeys: (key) => key === 'id'})
-
-  return event
 }
 
 export const processEvents = (events: CalendarEvent[]): CalendarEvent[] => {
-  return _.reduce(
-    _.uniqBy(events, ({id}) => id),
+  const processedEvents = _.reduce(
+    _.uniqWith(events, _.isEqual),
     (accumulator, currentValue) => {
       if (!accumulator.length) return [currentValue]
 
@@ -201,5 +197,12 @@ export const processEvents = (events: CalendarEvent[]): CalendarEvent[] => {
       return accumulator
     },
     [] as CalendarEvent[],
+  )
+
+  return processedEvents.map(
+    (event): CalendarEvent => ({
+      ...event,
+      id: hash(event, {excludeKeys: (key) => key === 'id'}),
+    }),
   )
 }

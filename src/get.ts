@@ -171,6 +171,7 @@ export const getData = async (): Promise<Entry[]> => {
 
     return filteredEntries
   } catch (e) {
+    log.fatal('Error')
     const time = new Date().toISOString()
     await page.screenshot({
       path: `${process.env.DATA_PATH}/screenshots/error_${time}.jpg`,
@@ -198,6 +199,7 @@ const loadEverything = async (
   log.trace("Waiting for 'Adatok betöltése folyamatban' to appear")
   await page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]')
 
+  log.trace('Scroll loading page')
   await page.waitForFunction(
     () => {
       const table = document.getElementById('scheduleSimpleView')
@@ -237,7 +239,7 @@ const loadEverything = async (
       })
       return false
     },
-    {polling: 'mutation', timeout: 180_000},
+    {polling: 'mutation', timeout: 5 * 60_000},
   )
 
   // Wait until page becomes active after the above function

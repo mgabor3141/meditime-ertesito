@@ -5,6 +5,7 @@ import {populateCalendars} from './calendar'
 import {log} from './logger'
 
 const main = async () => {
+  log.info('Starting...')
   const entries = await getData()
 
   const wardIds = JSON.parse(
