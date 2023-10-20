@@ -50,6 +50,7 @@ export const getData = async (): Promise<Entry[]> => {
     headless: process.env.HEADLESS === 'false' ? false : 'new',
   })
   const page = await browser.newPage()
+  // await page.emulateCPUThrottling(16)
 
   try {
     await page.goto('https://meditime.today/')
@@ -193,16 +194,9 @@ const loadEverything = async (
   page: Page,
   interaction: () => Promise<unknown> = async () => {},
 ) => {
-  log.trace('Wait for small button spinner to disappear')
-  await page.waitForXPath('//button/div/i[contains(@class, "fa-spinner")]', {
-    hidden: true,
-  })
-
+  await interaction()
   log.trace("Waiting for 'Adatok betöltése folyamatban' to appear")
-  await Promise.all([
-    page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]'),
-    interaction(),
-  ])
+  await page.waitForXPath('//div[text()="Adatok betöltése folyamatban"]')
 
   await page.waitForFunction(
     () => {
@@ -243,9 +237,9 @@ const loadEverything = async (
       })
       return false
     },
-    {polling: 'mutation', timeout: 60_000},
+    {polling: 'mutation', timeout: 180_000},
   )
 
   // Wait until page becomes active after the above function
-  await new Promise((r) => setTimeout(r, 1000))
+  await new Promise((r) => setTimeout(r, 3_000))
 }
