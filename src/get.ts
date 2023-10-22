@@ -48,6 +48,7 @@ export const getData = async (): Promise<Entry[]> => {
     defaultViewport: {width: 1080, height: 700},
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
     headless: process.env.HEADLESS === 'false' ? false : 'new',
+    protocolTimeout: 5 * 60_000,
   })
   const page = await browser.newPage()
   // await page.emulateCPUThrottling(16)
@@ -70,7 +71,7 @@ export const getData = async (): Promise<Entry[]> => {
     await page.click('div.login button.rz-button.btn-primary')
 
     // Wait a bit to make sure that the home page is done loading
-    await new Promise((r) => setTimeout(r, 10000))
+    await new Promise((r) => setTimeout(r, 20_000))
 
     await page.click('a[title="Részleg modul"]')
     await page.waitForSelector('a[href="/wardSchedule"]')
