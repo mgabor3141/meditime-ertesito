@@ -1,4 +1,5 @@
 import pino from 'pino'
+import Rollbar from 'rollbar'
 import {options} from './options'
 
 export const log = pino({
@@ -19,8 +20,6 @@ export const log = pino({
               options: {
                 rollbarOpts: {
                   accessToken: options.rollbarAccessToken,
-                  captureUncaught: true,
-                  captureUnhandledRejections: true,
                 },
               },
             },
@@ -29,3 +28,14 @@ export const log = pino({
     ],
   },
 })
+
+if (options.rollbarAccessToken) {
+  new Rollbar({
+    accessToken: options.rollbarAccessToken,
+    captureUncaught: true,
+    captureUnhandledRejections: true,
+    payload: {
+      version: process.env.npm_package_version,
+    },
+  })
+}
