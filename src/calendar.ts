@@ -1,6 +1,7 @@
 import {Data} from './get'
 import {calendar_v3, google} from 'googleapis'
 import {log} from './logger'
+import {options} from './options'
 import {User, users} from './users'
 import {
   CalendarEvent,
@@ -14,7 +15,7 @@ import {scriptStartDate} from './dates'
 import Schema$CalendarListEntry = calendar_v3.Schema$CalendarListEntry
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: `${process.env.DATA_PATH}/calendar-service-account.json`,
+  credentials: options.googleAuthCredentials as any,
   scopes: ['https://www.googleapis.com/auth/calendar'],
 })
 

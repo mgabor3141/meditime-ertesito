@@ -23,3 +23,6 @@ schema:
       email: email
   onePerDay:
     - str
+  wardIds: str
+  rollbarAccessToken: str
+  googleAuthCredentials: str

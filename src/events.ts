@@ -141,11 +141,7 @@ export const entryToEvent = (
   if (WardId && WardId in wardIds) {
     wardName = wardIds[WardId]
   } else {
-    log.error(
-      `No ward name found for ID: ${WardId}\n  Event details: ${JSON.stringify(
-        entry,
-      )}`,
-    )
+    log.error(`No ward name found for ID: ${WardId}`, {entry})
     wardName = `ID${WardId}`
   }
 
