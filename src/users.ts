@@ -7,7 +7,10 @@ export type User = {
 
 export type Users = Record<string, User>
 
-export const users: Users = options.users.reduce((acc, {id, ...rest}) => {
-  acc[id] = rest
-  return acc
-}, {} as Users)
+// @ts-expect-error old types
+export const users: Users = options.users.reduce
+  ? options.users.reduce((acc, {id, ...rest}) => {
+      acc[id] = rest
+      return acc
+    }, {} as Users)
+  : options.users

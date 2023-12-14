@@ -9,17 +9,21 @@ export const log = pino({
         target: 'pino-pretty',
         options: {},
       },
-      {
-        level: 'info',
-        target: '@t-botz/pino-rollbar-transport',
-        options: {
-          rollbarOpts: {
-            accessToken: options.rollbarAccessToken,
-            captureUncaught: true,
-            captureUnhandledRejections: true,
-          },
-        },
-      },
+      ...(options.rollbarAccessToken
+        ? [
+            {
+              level: 'info',
+              target: '@t-botz/pino-rollbar-transport',
+              options: {
+                rollbarOpts: {
+                  accessToken: options.rollbarAccessToken,
+                  captureUncaught: true,
+                  captureUnhandledRejections: true,
+                },
+              },
+            },
+          ]
+        : []),
     ],
   },
 })
