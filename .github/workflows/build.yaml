@@ -8,15 +8,6 @@ on:
   schedule:
     - cron: "0 */2 * * *"
 
-env:
-  READ_FROM_ENV: ${{ vars.READ_FROM_ENV }}
-  LOG_LEVEL: ${{ vars.LOG_LEVEL }}
-  ONE_PER_DAY: ${{ secrets.ONE_PER_DAY }}
-  USERS: ${{ secrets.USERS }}
-  WARD_IDS: ${{ secrets.WARD_IDS }}
-  ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
-  GOOGLE_AUTH_CREDENTIALS: ${{ secrets.GOOGLE_AUTH_CREDENTIALS }}
-
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -26,3 +17,15 @@ jobs:
       - run: yarn
       - run: yarn build
       - run: yarn start
+        env:
+          READ_FROM_ENV: ${{ vars.READ_FROM_ENV }}
+          LOG_LEVEL: ${{ vars.LOG_LEVEL }}
+          ONE_PER_DAY: ${{ secrets.ONE_PER_DAY }}
+          USERS: ${{ secrets.USERS }}
+          WARD_IDS: ${{ secrets.WARD_IDS }}
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          GOOGLE_AUTH_CREDENTIALS: ${{ secrets.GOOGLE_AUTH_CREDENTIALS }}
+          MEDITIME_USERNAME: ${{ secrets.MEDITIME_USERNAME }}
+          MEDITIME_PASSWORD: ${{ secrets.MEDITIME_PASSWORD }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_PW: ${{ secrets.SENDER_PW }}
