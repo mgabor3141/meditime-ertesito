@@ -171,17 +171,6 @@ export const getData = async (): Promise<Entry[]> => {
       )
 
     return filteredEntries
-  } catch (e) {
-    log.fatal('Error')
-    const time = new Date().toISOString()
-    await page.screenshot({
-      path: `${process.env.DATA_PATH}/screenshots/error_${time}.jpg`,
-    })
-    await fs.writeFile(
-      `${process.env.DATA_PATH}/screenshots/error_${time}.txt`,
-      e instanceof Error ? e.stack : e,
-    )
-    throw e
   } finally {
     await browser.close()
   }

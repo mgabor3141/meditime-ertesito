@@ -7,7 +7,9 @@ export const log = pino({
       {
         level: options.logLevel,
         target: 'pino-pretty',
-        options: {},
+        options: {
+          colorize: false,
+        },
       },
       ...(options.rollbarAccessToken
         ? [
