@@ -58,7 +58,7 @@ export const getData = async (): Promise<Entry[]> => {
     await page.waitForSelector('div.login input[type="text"]')
 
     // Log in
-    log.info('Logging in')
+    log.debug('Logging in')
     await page.type(
       'div.login input[type="text"]',
       process.env.MEDITIME_USERNAME,
@@ -78,7 +78,7 @@ export const getData = async (): Promise<Entry[]> => {
     await page.click('a[href="/wardSchedule"]')
     await page.waitForSelector('table#scheduleSimpleView')
 
-    log.info('Preparing')
+    log.debug('Preparing')
 
     log.trace('Prepare "Orvos" filter')
     // Prepare filters
@@ -126,7 +126,7 @@ export const getData = async (): Promise<Entry[]> => {
     if (entries.length === 0) throw new Error('No shift entries found!')
     const shiftEntries = entries.length
 
-    log.info(`Done! ${entries.length} entries so far`)
+    log.debug(`Done! ${entries.length} entries so far`)
     log.info('Retrieving night shifts')
 
     await new Promise((r) => setTimeout(r, 5_000))
@@ -159,7 +159,7 @@ export const getData = async (): Promise<Entry[]> => {
     if (entries.length === shiftEntries)
       throw new Error('No night entries found!')
 
-    log.info(`Done! ${entries.length} entries total`)
+    log.debug(`Done! ${entries.length} entries total`)
 
     // Labels to deduplicate within a given day
     const onePerDay = options.onePerDay as LabelTypes[]
@@ -167,7 +167,7 @@ export const getData = async (): Promise<Entry[]> => {
       mapFunction(onePerDay),
     )
 
-    log.info(`${filteredEntries.length} entries after filtering`)
+    log.debug(`${filteredEntries.length} entries after filtering`)
     if (process.env.WRITE_ENTRIES === 'true')
       await fs.writeFile(
         `${process.env.DATA_PATH}/entries.json`,

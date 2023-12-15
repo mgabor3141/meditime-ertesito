@@ -92,6 +92,7 @@ export type Diff = Record<
 >
 
 export const populateCalendars = async ({entries, wardIds}: Data) => {
+  log.debug(`Processing calendars`)
   const {
     data: {items: calendars},
   } = await calendar.calendarList.list({
@@ -108,7 +109,7 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
     const calendarId = await getCalendarId(calendars, user)
     calendarIds[userId] = calendarId
 
-    log.info(`Processing calendar for ${userId}`)
+    log.trace(`Processing calendar for ${userId}`)
 
     const userEntries = processEvents(
       _.compact(
@@ -196,11 +197,11 @@ const getCalendarId = async (
   else return await createCalendar(user)
 }
 
-const createCalendar = async ([userId, {name, email}]: [
+const createCalendar = async ([userId, {name}]: [
   string,
   User,
 ]): Promise<string> => {
-  log.info('Creating calendar for', email)
+  log.debug('Creating calendar for', userId)
 
   const {
     data: {id: newCalendarId},
