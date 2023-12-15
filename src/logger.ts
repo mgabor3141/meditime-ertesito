@@ -15,7 +15,7 @@ export const log = pino({
       ...(options.rollbarAccessToken
         ? [
             {
-              level: 'info',
+              level: 'warn',
               target: '@t-botz/pino-rollbar-transport',
               options: {
                 rollbarOpts: {

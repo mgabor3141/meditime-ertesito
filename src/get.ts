@@ -129,11 +129,15 @@ export const getData = async (): Promise<Entry[]> => {
     log.info(`Done! ${entries.length} entries so far`)
     log.info('Retrieving night shifts')
 
+    await new Promise((r) => setTimeout(r, 5_000))
+
     // Night shifts
     await page.click('a[title="Ügyelet modul"]')
     await page.waitForSelector('a[href="/dutySchedule"]')
     await page.click('a[href="/dutySchedule"]')
     await page.waitForSelector('table#scheduleSimpleView')
+
+    await new Promise((r) => setTimeout(r, 10_000))
 
     await clickXPath(
       page,

@@ -102,13 +102,13 @@ export const populateCalendars = async ({entries, wardIds}: Data) => {
   const calendarIds: Record<string, string> = {}
 
   for (const user of Object.entries(users)) {
-    const [userId, {name}] = user
+    const [userId] = user
     diff[userId] = {added: [], removed: []}
 
     const calendarId = await getCalendarId(calendars, user)
     calendarIds[userId] = calendarId
 
-    log.info(`Processing calendar for ${name} ${userId}`)
+    log.info(`Processing calendar for ${userId}`)
 
     const userEntries = processEvents(
       _.compact(
@@ -174,8 +174,8 @@ const getCalendarId = async (
   user: [string, User],
 ): Promise<string> => {
   const [userId] = user
-  const matchingCalendars = calendars?.filter(({description}) =>
-    description?.startsWith(userId.toString()),
+  const matchingCalendars = calendars?.filter(
+    ({description}) => description?.startsWith(userId.toString()),
   )
 
   if (!matchingCalendars) {
