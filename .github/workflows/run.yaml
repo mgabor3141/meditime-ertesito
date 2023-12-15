@@ -21,6 +21,7 @@ jobs:
       - run: yarn build
       - run: yarn start
         env:
+          NODE_ENV: ${{ vars.NODE_ENV }}
           READ_FROM_ENV: ${{ vars.READ_FROM_ENV }}
           LOG_LEVEL: ${{ vars.LOG_LEVEL }}
           ONE_PER_DAY: ${{ secrets.ONE_PER_DAY }}
