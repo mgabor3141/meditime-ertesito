@@ -18,7 +18,9 @@ export const parseMonth = async (page: Page): Promise<Entry[]> =>
           if (!idString) throw `No idString found in event:\n${cell.innerHTML}`
           const [Date, _Id, UserId, WardId] = idString.split('_')
 
-          return Array.from(cell.querySelectorAll('div.dropzone span').values())
+          return Array.from(
+            cell.querySelectorAll('div.dropzone span.pb-2').values(),
+          )
             .map((span) => span.textContent)
             .map((Type) => {
               if (!Type)
