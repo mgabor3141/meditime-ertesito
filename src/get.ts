@@ -57,6 +57,8 @@ export const getData = async (): Promise<Entry[]> => {
 
   try {
     await page.goto('https://meditime.today/')
+    await sleep(5_000)
+    console.log(await page.content())
     await page.waitForSelector('div.login input[type="text"]')
 
     // Log in
