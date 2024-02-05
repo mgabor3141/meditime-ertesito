@@ -30,6 +30,8 @@ const xPath = async (
 const clickXPath = async (page: Page, path: string) =>
   await (await xPath(page, path)).click()
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
 export const getData = async (): Promise<Entry[]> => {
   if (process.env.LOCAL_SOURCE === 'true') {
     log.info('Retrieving shifts from file instead of Meditime')
@@ -68,10 +70,12 @@ export const getData = async (): Promise<Entry[]> => {
       process.env.MEDITIME_PASSWORD,
     )
     await page.click('div.login input[type="checkbox"]')
+    // Wait for form to propagate
+    await sleep(1_000)
     await page.click('div.login button.rz-button.btn-primary')
 
     // Wait a bit to make sure that the home page is done loading
-    await new Promise((r) => setTimeout(r, 20_000))
+    await sleep(10_000)
 
     await page.click('a[title="Részleg modul"]')
     await page.waitForSelector('a[href="/wardSchedule"]')
