@@ -25,8 +25,7 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-      - name: Tailscale exit node
-        run: tailscale up --exit-node=100.92.130.14
+          args: --exit-node=100.92.130.14
       - run: yarn start
         env:
           NODE_ENV: ${{ vars.NODE_ENV }}
